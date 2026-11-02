@@ -63,6 +63,25 @@ async function prepare(page: Page, mode: string) {
         });
         return;
       }
+      if (mode === "wrong_path") {
+        await route.fulfill({ status: 404, json: { message: "Not found" } });
+        return;
+      }
+      if (mode === "unexpected_reply") {
+        await route.fulfill({
+          status: 400,
+          contentType: "text/html",
+          body: "<!doctype html><title>Not an auth response</title>",
+        });
+        return;
+      }
+      if (mode === "unknown_error") {
+        await route.fulfill({
+          status: 418,
+          json: { message: "Unrecognized response without account details" },
+        });
+        return;
+      }
       if (mode === "rate_limit") {
         await route.fulfill({
           status: 429,
@@ -126,6 +145,9 @@ async function prepare(page: Page, mode: string) {
 }
 for (const [mode, message] of [
   ["email_not_confirmed", "غير مؤكّد"],
+  ["wrong_path", "HTTP 404 / AuthApiError"],
+  ["unexpected_reply", "AuthUnknownError"],
+  ["unknown_error", "HTTP 418 / AuthApiError"],
   ["legacy_unconfirmed", "غير مؤكّد"],
   ["legacy_credentials", "لم يقبل مشروع Supabase"],
   ["rate_limit", "عدد محاولات"],

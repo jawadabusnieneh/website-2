@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ownerLoginError, signInOwner } from "../src/lib/owner-auth";
+import {
+  authDiagnostic,
+  ownerLoginError,
+  signInOwner,
+} from "../src/lib/owner-auth";
 
 function setup() {
   const signIn = vi.fn().mockResolvedValue({ error: null });
@@ -103,4 +107,54 @@ describe("safe authentication diagnostics", () => {
     expect(
       ownerLoginError({ message: "sensitive raw provider detail" }),
     ).not.toContain("sensitive"));
+});
+
+describe("unknown provider diagnostics", () => {
+  it("reports status and error type without serializing provider values", () => {
+    const failure = {
+      status: 418,
+      name: "AuthApiError",
+      message: "private provider body",
+      code: "sb_secret_example",
+    };
+    expect(ownerLoginError(failure)).toContain("HTTP 418 / AuthApiError");
+    expect(ownerLoginError(failure)).not.toContain("private provider body");
+    expect(ownerLoginError(failure)).not.toContain("sb_secret");
+  });
+  it("retains provider machine codes while excluding credential-like values", () => {
+    expect(
+      authDiagnostic({
+        status: 400,
+        name: "AuthApiError",
+        code: "validation_failed",
+      }),
+    ).toContain("validation_failed");
+    expect(
+      authDiagnostic({
+        status: 401,
+        name: "AuthApiError",
+        code: "sb_publishable_example",
+      }),
+    ).not.toContain("sb_publishable");
+    expect(
+      authDiagnostic({
+        status: 401,
+        name: "AuthApiError",
+        code: "eyJhbGciOiJIUzI1NiJ9.signature",
+      }),
+    ).not.toContain("eyJ");
+  });
+  it("rejects untrusted names and statuses in diagnostic output", () => {
+    expect(
+      authDiagnostic({ name: "private provider detail", status: 9999 }),
+    ).toBe("HTTP unknown / UnknownError");
+  });
+  it("distinguishes a wrong endpoint and non-JSON replies", () => {
+    expect(ownerLoginError({ name: "AuthApiError", status: 404 })).toContain(
+      "عنوان خدمة",
+    );
+    expect(ownerLoginError({ name: "AuthUnknownError" })).toContain(
+      "استجابة غير صالحة",
+    );
+  });
 });

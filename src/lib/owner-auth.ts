@@ -7,6 +7,43 @@ interface AuthFailure {
   message?: string;
 }
 
+/** Expose only status and known error names, never provider response bodies. */
+export function authDiagnostic(error: unknown): string {
+  const failure = (error ?? {}) as AuthFailure;
+  const status =
+    typeof failure.status === "number" &&
+    Number.isInteger(failure.status) &&
+    failure.status >= 0 &&
+    failure.status <= 599
+      ? String(failure.status)
+      : "unknown";
+  const knownNames = new Set([
+    "AuthApiError",
+    "AuthUnknownError",
+    "AuthRetryableFetchError",
+    "AuthSessionMissingError",
+    "AuthInvalidTokenResponseError",
+    "AuthInvalidCredentialsError",
+    "AuthPKCEGrantCodeExchangeError",
+    "TypeError",
+    "AbortError",
+    "TimeoutError",
+    "QuotaExceededError",
+    "SecurityError",
+    "NavigatorLockAcquireTimeoutError",
+  ]);
+  const name = knownNames.has(failure.name ?? "")
+    ? failure.name
+    : "UnknownError";
+  const code =
+    typeof failure.code === "string" &&
+    /^[a-z][a-z_]{1,63}$/.test(failure.code) &&
+    !/^(sb_|gh[pousr]_|github_pat_)/.test(failure.code)
+      ? ` / ${failure.code}`
+      : "";
+  return `HTTP ${status} / ${name}${code}`;
+}
+
 /** Translate provider outcomes without echoing tokens, passwords or raw errors. */
 export function ownerLoginError(error: unknown): string {
   const failure = (error ?? {}) as AuthFailure;
@@ -32,6 +69,30 @@ export function ownerLoginError(error: unknown): string {
   ) {
     return "إعدادات ربط Supabase غير صحيحة. تأكّد أن رابط المشروع والمفتاح العام في Cloudflare مأخوذان من المشروع نفسه، ثم أعد بناء الموقع.";
   }
+  if (failure.status === 404) {
+    return (
+      "عنوان خدمة تسجيل الدخول غير صحيح. استخدم Project URL الأساسي في إعدادات Cloudflare، دون مسارات REST أو لوحة التحكم. رمز التشخيص: " +
+      authDiagnostic(error)
+    );
+  }
+  if (
+    failure.name === "AuthUnknownError" ||
+    failure.name === "AuthInvalidTokenResponseError"
+  ) {
+    return (
+      "خادم تسجيل الدخول أعاد استجابة غير صالحة. راجع رابط المشروع في تفاصيل الاتصال وإعداد Project URL في Cloudflare. رمز التشخيص: " +
+      authDiagnostic(error)
+    );
+  }
+  if (
+    failure.name === "QuotaExceededError" ||
+    failure.name === "SecurityError"
+  ) {
+    return (
+      "تعذّر حفظ جلسة الدخول في المتصفح. جرّب نافذة خاصة وتحقّق من السماح بتخزين بيانات الموقع. رمز التشخيص: " +
+      authDiagnostic(error)
+    );
+  }
   if ((failure.status ?? 0) >= 500) {
     return "خدمة تسجيل الدخول في Supabase غير متاحة حاليًا. حاول مجددًا بعد قليل.";
   }
@@ -53,7 +114,10 @@ export function ownerLoginError(error: unknown): string {
   if (failure.code === "bad_jwt" || failure.code === "session_expired") {
     return "تعذّر التحقق من جلسة الدخول. حدّث الصفحة وسجّل الدخول مجددًا.";
   }
-  return "تعذّر إتمام تسجيل الدخول. راجع حالة المستخدم وسجل Authentication في مشروع Supabase المرتبط.";
+  return (
+    "تعذّر إتمام تسجيل الدخول. راجع سجل Authentication في المشروع المرتبط. رمز التشخيص: " +
+    authDiagnostic(error)
+  );
 }
 
 export class OwnerSignInError extends Error {}
