@@ -1355,8 +1355,11 @@ footer {
 }
 .catalog-layout {
   display: grid;
-  grid-template-columns: 210px 1fr;
+  grid-template-columns: 210px minmax(0, 1fr);
   gap: 40px;
+}
+.catalog-layout > * {
+  min-width: 0;
 }
 .filter-title {
   margin-bottom: 25px;
@@ -1391,14 +1394,19 @@ footer {
   outline: none;
 }
 .filters fieldset {
+  min-inline-size: 0;
+  inline-size: 100%;
   border-bottom: 1px solid var(--line);
-  padding-block: 22px;
+  margin-block-start: 22px;
+  padding-block-end: 22px;
 }
 .filters legend {
   font-size: 13px;
   font-weight: 500;
-  float: right;
+  display: block;
+  float: none;
   width: 100%;
+  max-inline-size: 100%;
   margin-bottom: 12px;
 }
 .radio-label {
@@ -1414,13 +1422,28 @@ footer {
   color: var(--muted);
   font-size: 10px;
 }
+.filters .radio-label {
+  min-inline-size: 0;
+  inline-size: 100%;
+}
+.filters .filter-option-name {
+  flex: 1;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.filters .radio-label small {
+  flex-shrink: 0;
+  margin-right: 0;
+}
 .price-range {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  min-inline-size: 0;
   align-items: center;
   gap: 8px;
 }
 .price-range input {
-  width: 45%;
+  width: 100%;
   font-size: 11px;
   padding: 8px 10px;
 }
@@ -2792,7 +2815,7 @@ footer {
     font-size: 22px;
   }
   .catalog-layout {
-    grid-template-columns: 190px 1fr;
+    grid-template-columns: 190px minmax(0, 1fr);
     gap: 30px;
   }
   .product-detail {
@@ -3022,7 +3045,7 @@ footer {
     gap: 12px;
   }
   .catalog-layout {
-    grid-template-columns: 170px 1fr;
+    grid-template-columns: 170px minmax(0, 1fr);
     gap: 25px;
   }
   .shop-grid {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Heart, Search, SlidersHorizontal, X } from "lucide-react";
 import { useStore } from "../lib/store";
@@ -10,13 +10,22 @@ export default function Shop() {
     [filters, setFilters] = useState(false);
   const q = params.get("q") ?? "",
     cat = params.get("category") ?? "";
+  const latestParams = useRef(params);
+  useEffect(() => {
+    latestParams.current = params;
+  }, [params]);
   function param(k: string, v: string) {
-    setParams((prev) => {
-      const p = new URLSearchParams(prev);
-      if (v) p.set(k, v);
-      else p.delete(k);
-      return p;
-    });
+    // Router navigation can render asynchronously. Preserve earlier field edits
+    // when the customer changes two filters before that render completes.
+    const next = new URLSearchParams(latestParams.current);
+    if (v) next.set(k, v);
+    else next.delete(k);
+    latestParams.current = next;
+    setParams(next);
+  }
+  function clearParams() {
+    latestParams.current = new URLSearchParams();
+    setParams(latestParams.current);
   }
   let results = data.products
     .filter((p) => p.visible)
@@ -113,7 +122,7 @@ export default function Shop() {
                 checked={!cat}
                 onChange={() => param("category", "")}
               />
-              جميع القطع
+              <span className="filter-option-name">جميع القطع</span>
             </label>
             {data.categories
               .filter((c) => c.visible)
@@ -125,7 +134,7 @@ export default function Shop() {
                     checked={cat === c.id}
                     onChange={() => param("category", c.id)}
                   />
-                  {c.name}
+                  <span className="filter-option-name">{c.name}</span>
                   <small>
                     {
                       data.products.filter(
@@ -172,11 +181,11 @@ export default function Shop() {
                   checked={!!params.get(key)}
                   onChange={(e) => param(key, e.target.checked ? "1" : "")}
                 />
-                {label}
+                <span className="filter-option-name">{label}</span>
               </label>
             ))}
           </fieldset>
-          <button className="text-link" onClick={() => setParams({})}>
+          <button className="text-link" onClick={clearParams}>
             مسح جميع الفلاتر <X size={14} />
           </button>
           <button
@@ -227,7 +236,7 @@ export default function Shop() {
               )}
               <h2>لم نجد قطعة هنا بعد</h2>
               <p>جرّبي كلمات أخرى أو عدّلي الفلاتر لاكتشاف المزيد.</p>
-              <button className="button" onClick={() => setParams({})}>
+              <button className="button" onClick={clearParams}>
                 اكتشفي جميع القطع <ArrowLeft size={18} />
               </button>
             </div>
