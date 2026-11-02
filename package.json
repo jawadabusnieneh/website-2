@@ -5,12 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/prepare-cloudflare.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run tests/logic.test.ts",
     "test:e2e": "playwright test",
     "format": "prettier --write src tests *.json *.ts index.html README.md",
-    "build:cloudflare": "npm run build && node scripts/prepare-cloudflare.mjs",
+    "build:cloudflare": "npm run build",
     "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy"
   },
   "dependencies": {

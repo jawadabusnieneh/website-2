@@ -82,7 +82,9 @@ npm run test:e2e         # Playwright: متجر، بحث، سلة، طلب، إ�
 
 ## النشر المجاني
 
-انشر `dist` على Netlify أو Vercel أو أي استضافة ملفات ثابتة مع SPA fallback. تتضمن الملفات `public/_redirects` و`vercel.json` لدعم الروابط المباشرة، بما فيها مسار الإدارة. أمر البناء `npm run build` ومجلد الإخراج `dist`. أضف متغيرات Vite قبل البناء واضبط Site URL/Redirect URLs في Supabase على نطاق الموقع الفعلي. لا تنشر ملف `.env.local`.
+انشر `dist` على Cloudflare أو Vercel أو أي استضافة ملفات ثابتة مع SPA fallback. يتضمن المشروع `vercel.json` لدعم الروابط المباشرة على Vercel، بينما يعتمد Cloudflare على معالجة SPA الأصلية في `wrangler.jsonc`. أمر البناء `npm run build` ومجلد الإخراج `dist`. أضف متغيرات Vite قبل البناء واضبط Site URL/Redirect URLs في Supabase على نطاق الموقع الفعلي. لا تنشر ملف `.env.local`.
+
+للنشر على Netlify فقط، أنشئ ملف `dist/_redirects` بعد اكتمال البناء بمحتوى `/* /index.html 200`. لا تضف هذه القاعدة إلى حزمة Cloudflare لأنها تسبب حلقة إعادة توجيه ويرفضها النشر.
 
 لا يعتمد الموقع على خدمات خطوط أو صور خارجية وقت التشغيل؛ الصور والخطوط موجودة في `public`. الخط IBM Plex Sans Arabic برخصة OFL المرفقة في `public/fonts/OFL.txt`. صور العرض الأساسية مولّدة خصيصًا للمشروع ولا تمثل منتجات فعلية أو آراء عملاء. استبدلها بصور الكتالوج الحقيقي وشعار العلامة عند الإطلاق.
 
@@ -93,7 +95,7 @@ npm run test:e2e         # Playwright: متجر، بحث، سلة، طلب، إ�
 
 لا ترفع مجلد الشيفرة أو `node_modules` أو ملفات `.env`. حزمة Cloudflare المعدّة في هذه الجلسة هي `/workspace/elite-cloudflare-pages.zip`، وتستثني ملف `_redirects` الخاص بالاستضافات الأخرى. تعتمد Pages على معالجة SPA الأصلية: لا تضف ملف `404.html` في الجذر، لتعمل الروابط المباشرة مثل `/shop` و`/product/p1` و`/elite-management-portal` دون إعادة توجيه ملفات JavaScript والصور إلى HTML.
 
-عند اختيار ربط Git بدل الرفع اليدوي، يجب رفع الشيفرة إلى المستودع أولًا؛ أمر البناء `npm run build`، ومجلد الإخراج `dist`، ونسخة Node هي 24. احذف `dist/_redirects` في خطوة البناء الخاصة بـ Pages بعد البناء، أو استثنه من حزمة النشر كما فعلنا هنا. متغيرات `VITE_SUPABASE_URL` و`VITE_SUPABASE_ANON_KEY` تُضبط قبل البناء؛ الرفع اليدوي لا يعيد بناء الملفات ولا يحقن متغيرات Vite بعد ذلك. بدونها يعمل الموقع في وضع العرض التجريبي. بعد ربط Supabase، أضف نطاق الموقع الجديد إلى إعدادات عناوين الموقع المسموحة في Supabase.
+عند اختيار ربط Git بدل الرفع اليدوي، يجب رفع الشيفرة إلى المستودع أولًا؛ أمر البناء `npm run build`، ومجلد الإخراج `dist`، ونسخة Node هي 24. ينظّف أمر البناء الافتراضي ملف `dist/_redirects` تلقائيًا؛ لا حاجة إلى خطوة يدوية إضافية. متغيرات `VITE_SUPABASE_URL` و`VITE_SUPABASE_ANON_KEY` تُضبط قبل البناء؛ الرفع اليدوي لا يعيد بناء الملفات ولا يحقن متغيرات Vite بعد ذلك. بدونها يعمل الموقع في وضع العرض التجريبي. بعد ربط Supabase، أضف نطاق الموقع الجديد إلى إعدادات عناوين الموقع المسموحة في Supabase.
 
 
 ## النشر من GitHub إلى Cloudflare Workers
@@ -105,12 +107,12 @@ npm run test:e2e         # Playwright: متجر، بحث، سلة، طلب، إ�
 | الحقل | القيمة |
 | --- | --- |
 | Project name | `eliteaccessories` |
-| Build command | `npm run build:cloudflare` |
+| Build command | `npm run build` |
 | Deploy command | `npx wrangler deploy` |
 | Preview command | `npx wrangler versions upload` |
 | Root directory | جذر المستودع |
 
-يستخدم Cloudflare نسخة Wrangler المثبتة والمثبتة في lockfile. يزيل بناء Cloudflare إعادة توجيه Netlify من `dist` فقط، وتعمل روابط React الداخلية عبر `not_found_handling: single-page-application`.
+يستخدم Cloudflare نسخة Wrangler المثبتة والمثبتة في lockfile. يزيل أمر البناء الافتراضي أي ملف `_redirects` متبقٍ من `dist`، وتعمل روابط React الداخلية عبر `not_found_handling: single-page-application`. يبقى `npm run build:cloudflare` اسمًا بديلًا للأمر نفسه. تم تفعيل `workers_dev` لتوفير رابط Cloudflare المجاني؛ لا ينشئ ذلك نطاقًا مخصصًا مدفوعًا.
 
 للنشر من جهاز آخر بعد ربط حساب Cloudflare وتشغيل المصادقة المحلية:
 
