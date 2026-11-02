@@ -4097,3 +4097,47 @@ mark {
     scroll-snap-align: start;
   }
 }
+
+.password-input {
+  position: relative;
+  display: block;
+}
+.login-card .password-input input {
+  padding-left: 48px;
+}
+.password-input .icon-button {
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.login-connection {
+  margin-top: 20px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.login-connection summary {
+  cursor: pointer;
+}
+.login-connection p {
+  font-size: 10px;
+  margin-top: 10px;
+  line-height: 1.9;
+}
+.login-connection code {
+  display: block;
+  font-size: 11px;
+  padding: 8px;
+  margin-top: 8px;
+  background: var(--cream);
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+
+.login-card .password-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  margin-bottom: 16px;
+}

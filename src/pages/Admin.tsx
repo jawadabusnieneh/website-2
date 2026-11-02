@@ -26,7 +26,12 @@ import {
   X,
 } from "lucide-react";
 import { useStore } from "../lib/store";
-import { supabase } from "../lib/supabase";
+import { supabase, supabaseProjectHost } from "../lib/supabase";
+import {
+  OwnerSignInError,
+  ownerLoginError,
+  signInOwner,
+} from "../lib/owner-auth";
 import { demoData } from "../lib/demo";
 import { money, normalize, uuid } from "../lib/utils";
 import type { Banner, Category, Collection, Product, Review } from "../types";
@@ -77,6 +82,7 @@ export default function Admin() {
     [sidebar, setSidebar] = useState(false),
     [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
+    [showPassword, setShowPassword] = useState(false),
     [loginError, setLoginError] = useState(""),
     [busy, setBusy] = useState(false),
     [query, setQuery] = useState(""),
@@ -100,28 +106,19 @@ export default function Admin() {
     if (!supabase) return;
     setBusy(true);
     setLoginError("");
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error)
-      setLoginError("تعذّر تسجيل الدخول. تحققي من البريد وكلمة المرور.");
-    else {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const result = await supabase
-        .from("owners")
-        .select("user_id")
-        .eq("user_id", user?.id)
-        .maybeSingle();
-      if (!result.data) {
-        setLoginError("هذا الحساب غير مخوّل لإدارة المتجر.");
-        await supabase.auth.signOut();
-      }
+    try {
+      await signInOwner(supabase, email, password);
+    } catch (error) {
+      setLoginError(
+        error instanceof OwnerSignInError
+          ? error.message
+          : ownerLoginError(error),
+      );
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   }
+
   async function action(
     fn: () => Promise<void>,
     message = "حُفظت التغييرات بنجاح",
@@ -333,16 +330,31 @@ export default function Admin() {
                   dir="ltr"
                 />
               </label>
-              <label>
-                كلمة المرور
-                <input
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </label>
+              <div className="password-field">
+                <label htmlFor="owner-password">كلمة المرور</label>
+                <span className="password-input">
+                  <input
+                    id="owner-password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    dir="ltr"
+                  />
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label={
+                      showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"
+                    }
+                    aria-pressed={showPassword}
+                    onClick={() => setShowPassword((visible) => !visible)}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </span>
+              </div>
               {loginError && (
                 <p className="form-error" role="alert">
                   {loginError}
@@ -351,6 +363,15 @@ export default function Admin() {
               <button className="button full-width" disabled={busy}>
                 {busy ? "جارٍ التحقق..." : "تسجيل الدخول"}
               </button>
+              <details className="login-connection">
+                <summary>تفاصيل الاتصال</summary>
+                <p>مشروع Supabase المرتبط بهذا الموقع:</p>
+                <code dir="ltr">{supabaseProjectHost}</code>
+                <p>
+                  يجب أن يكون حساب Authentication وصلاحية المالك داخل هذا
+                  المشروع نفسه.
+                </p>
+              </details>
             </form>
           )}
         </div>
