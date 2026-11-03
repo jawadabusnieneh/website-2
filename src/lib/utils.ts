@@ -1,3 +1,8 @@
+import {
+  productWebUrl,
+  webImageUrl,
+  type OrderImageLinks,
+} from "./order-images";
 import { deliveryQuote } from "./delivery";
 import type { CartItem, Customer, Product, Settings } from "../types";
 export const normalize = (value: string) =>
@@ -51,6 +56,7 @@ export function whatsappOrder(
   customer: Customer,
   settings: Settings,
   reference: string,
+  media: OrderImageLinks = {},
 ) {
   const number = settings.whatsapp.replace(/[^\d]/g, "");
   if (!/^\d{8,15}$/.test(number))
@@ -61,6 +67,7 @@ export function whatsappOrder(
     throw new Error("تغيّر توفر إحدى القطع أو خياراتها. يُرجى مراجعة السلة.");
   let total = 0,
     count = 0;
+  const linkedProducts = new Set<string>();
   const lines = items.map((item) => {
     const p = products.find((p) => p.id === item.productId && p.visible);
     if (!p || item.quantity > p.stock || item.quantity < 1)
@@ -73,7 +80,21 @@ export function whatsappOrder(
     const subtotal = price(p) * item.quantity;
     total += subtotal;
     count += item.quantity;
-    return `${p.name}\n${[item.color, item.size].filter(Boolean).join(" / ")}\nالكمية: ${item.quantity} | سعر القطعة: ${money(price(p), settings.currency)}\nالمجموع: ${money(subtotal, settings.currency)}`;
+    const links: string[] = [];
+    if (!linkedProducts.has(p.id)) {
+      const image = webImageUrl(
+        media.images?.[p.id] ?? p.images[0],
+        media.origin,
+      );
+      const product = productWebUrl(p.id, media.origin);
+      if (image) links.push(`صورة المنتج: ${image}`);
+      if (product) links.push(`رابط المنتج: ${product}`);
+      linkedProducts.add(p.id);
+    }
+    return [
+      `${p.name}\n${[item.color, item.size].filter(Boolean).join(" / ")}\nالكمية: ${item.quantity} | سعر القطعة: ${money(price(p), settings.currency)}\nالمجموع: ${money(subtotal, settings.currency)}`,
+      ...links,
+    ].join("\n");
   });
   if (!items.length) throw new Error("السلة فارغة.");
   const delivery = deliveryQuote(settings, customer.deliveryRegion);

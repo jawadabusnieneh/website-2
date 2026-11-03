@@ -4167,3 +4167,68 @@ mark {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+.order-photos {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 22px;
+  margin-top: 22px;
+  background: #fdfbf8;
+}
+.order-photos h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+}
+.order-photos > p {
+  font-size: 11px;
+  line-height: 1.9;
+  color: var(--muted);
+  margin-block: 12px;
+}
+.order-photos > .button {
+  min-height: 42px;
+  font-size: 11px;
+  gap: 12px;
+  margin-block: 6px 12px;
+}
+.order-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.order-photo {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.order-photo > img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 3px;
+}
+.order-photo > span {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.order-photo .text-link {
+  font-size: 10px;
+  gap: 7px;
+}
+@media (max-width: 700px) {
+  .order-photos {
+    padding: 16px;
+  }
+  .order-photo-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .order-photos > .button {
+    width: 100%;
+    white-space: normal;
+  }
+}

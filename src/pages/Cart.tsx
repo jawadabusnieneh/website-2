@@ -1,3 +1,5 @@
+import OrderPhotos from "../components/OrderPhotos";
+import { useOrderImages } from "../lib/use-order-images";
 import Media from "../components/Media";
 import { useEffect, useState } from "react";
 import DeliverySelect from "../components/DeliverySelect";
@@ -52,6 +54,11 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
     }, 0),
     count = cart.reduce((n, x) => n + x.quantity, 0);
   const invalid = cartProblem(cart, data.products);
+  const orderImages = useOrderImages(
+    cart,
+    data.products,
+    checkout && cart.length > 0,
+  );
   const delivery = isDeliveryRegion(customer.deliveryRegion)
     ? deliveryQuote(data.settings, customer.deliveryRegion)
     : null;
@@ -81,6 +88,8 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
     invalid,
     delivery?.fee,
     orderProductNames,
+    orderImages.version,
+    checkout,
     data.settings.name,
     data.settings.whatsapp,
     data.settings.currency,
@@ -114,6 +123,10 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
       setError("اختاري منطقة التوصيل قبل إرسال الطلب.");
       return;
     }
+    if (orderImages.linksLoading) {
+      setError("جارٍ تجهيز روابط صور الطلب. انتظري قليلًا ثم حاولي مجددًا.");
+      return;
+    }
     try {
       const url = whatsappOrder(
         cart,
@@ -121,6 +134,14 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
         customer,
         data.settings,
         `EL-${Date.now().toString(36).toUpperCase()}`,
+        {
+          origin: window.location.origin,
+          images: Object.fromEntries(
+            orderImages.images
+              .filter((image) => image.imageUrl)
+              .map((image) => [image.productId, image.imageUrl!]),
+          ),
+        },
       );
       setOrderUrl(url);
       window.open(url, "_blank", "noopener,noreferrer");
@@ -242,6 +263,10 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
                       اضغطي «إرسال» داخل واتساب ليصل إلى المتجر. فتح واتساب وحده
                       لا يؤكد استلام الطلب.
                     </p>
+                    <p>
+                      تتضمن الرسالة روابط صور المنتجات المتاحة. لإرفاق ملفات
+                      الصور، استخدمي قسم صور الطلب أدناه.
+                    </p>
                     <a
                       href={orderUrl}
                       target="_blank"
@@ -252,6 +277,14 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
                     </a>
                   </div>
                 </div>
+              )}
+              {orderUrl && (
+                <OrderPhotos
+                  images={orderImages.images}
+                  files={orderImages.files}
+                  loading={orderImages.filesLoading}
+                  orderUrl={orderUrl}
+                />
               )}
             </form>
           ) : (
@@ -406,10 +439,12 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
               type="submit"
               form="checkout-form"
               className="button full-width"
-              disabled={invalid}
+              disabled={invalid || orderImages.linksLoading}
             >
               <MessageCircle size={19} />
-              إرسال الطلب عبر واتساب
+              {orderImages.linksLoading
+                ? "جارٍ تجهيز صور الطلب..."
+                : "إرسال الطلب عبر واتساب"}
             </button>
           ) : (
             <button
