@@ -1,3 +1,5 @@
+import { useLanguage } from "../lib/i18n";
+import { optionLabel } from "../lib/i18n-core";
 import { getDeliveryOptions } from "../lib/delivery";
 import Media from "../components/Media";
 import { useEffect, useState } from "react";
@@ -16,6 +18,7 @@ import { useStore } from "../lib/store";
 import { money, price } from "../lib/utils";
 import ProductCard from "../components/ProductCard";
 export default function ProductPage() {
+  const { t, language } = useLanguage();
   const { id } = useParams(),
     { data, add, favorites, favorite } = useStore();
   const p = data.products.find((p) => p.id === id && p.visible);
@@ -33,16 +36,17 @@ export default function ProductPage() {
     return (
       <div className="container empty-state">
         <ShoppingBag size={38} />
-        <h1>هذه القطعة غير متاحة حاليًا</h1>
+        <h1>{t("هذه القطعة غير متاحة حاليًا")}</h1>
         <Link to="/shop" className="button">
-          استكشفي التشكيلة <ArrowLeft size={18} />
+          {t("استكشفي التشكيلة ")}
+          <ArrowLeft size={18} />
         </Link>
       </div>
     );
   return (
     <div className="container product-page">
       <div className="breadcrumbs">
-        <Link to="/">الرئيسية</Link>
+        <Link to="/">{t("الرئيسية")}</Link>
         <span>/</span>
         <Link to={`/shop?category=${p.category}`}>
           {data.categories.find((c) => c.id === p.category)?.name}
@@ -61,7 +65,7 @@ export default function ProductPage() {
                 <button
                   key={i}
                   className={photo === i ? "active" : ""}
-                  aria-label={`صورة المنتج ${i + 1}`}
+                  aria-label={t("صورة المنتج {value0}", { value0: i + 1 })}
                   onClick={() => setPhoto(i)}
                 >
                   <Media src={image} alt="" />
@@ -88,11 +92,16 @@ export default function ProductPage() {
           </div>
           <span className={`stock-label ${!p.stock ? "out" : ""}`}>
             <span />
-            {p.stock ? `متوفر — ${p.stock} قطع` : "نفدت الكمية حاليًا"}
+            {p.stock
+              ? t("متوفر \u2014 {value0} قطع", { value0: p.stock })
+              : t("نفدت الكمية حاليًا")}
           </span>
           {p.colors.length > 0 && (
             <fieldset className="variant-field">
-              <legend>اللون: {color}</legend>
+              <legend>
+                {t("اللون: ")}
+                {optionLabel(p, "colors", color, language)}
+              </legend>
               <div>
                 {p.colors.map((c) => (
                   <button
@@ -100,7 +109,7 @@ export default function ProductPage() {
                     className={color === c ? "variant selected" : "variant"}
                     onClick={() => setColor(c)}
                   >
-                    {c}
+                    {optionLabel(p, "colors", c, language)}
                     {color === c && <Check size={13} />}
                   </button>
                 ))}
@@ -109,7 +118,7 @@ export default function ProductPage() {
           )}
           {p.sizes.length > 0 && (
             <fieldset className="variant-field">
-              <legend>المقاس</legend>
+              <legend>{t("المقاس")}</legend>
               <div>
                 {p.sizes.map((s) => (
                   <button
@@ -117,7 +126,7 @@ export default function ProductPage() {
                     className={size === s ? "variant selected" : "variant"}
                     onClick={() => setSize(s)}
                   >
-                    {s}
+                    {optionLabel(p, "sizes", s, language)}
                   </button>
                 ))}
               </div>
@@ -126,7 +135,7 @@ export default function ProductPage() {
           <div className="detail-purchase">
             <div className="quantity-control">
               <button
-                aria-label="تقليل الكمية"
+                aria-label={t("تقليل الكمية")}
                 disabled={quantity <= 1}
                 onClick={() => setQuantity((q) => q - 1)}
               >
@@ -134,7 +143,7 @@ export default function ProductPage() {
               </button>
               <span>{quantity}</span>
               <button
-                aria-label="زيادة الكمية"
+                aria-label={t("زيادة الكمية")}
                 disabled={quantity >= p.stock}
                 onClick={() => setQuantity((q) => q + 1)}
               >
@@ -147,11 +156,11 @@ export default function ProductPage() {
               onClick={() => add(p, quantity, color, size)}
             >
               <ShoppingBag size={18} />
-              أضيفي إلى الحقيبة
+              {t("أضيفي إلى الحقيبة")}
             </button>
             <button
               className={`icon-button detail-favorite ${favorites.includes(p.id) ? "selected" : ""}`}
-              aria-label="تبديل المفضلة"
+              aria-label={t("تبديل المفضلة")}
               onClick={() => favorite(p.id)}
             >
               <Heart
@@ -163,34 +172,40 @@ export default function ProductPage() {
           <div className="delivery-note">
             <Truck size={20} />
             <span>
-              توصيل إلى بابك حسب المنطقة
+              {t("توصيل إلى بابك حسب المنطقة")}
               <small>
-                {getDeliveryOptions(data.settings)
+                {getDeliveryOptions(data.settings, language)
                   .map(
                     (option) =>
                       `${option.label} ${money(option.fee, data.settings.currency)}`,
                   )
                   .join(" · ")}
               </small>
-              <small>يتم تأكيد التوفر والتوصيل مع المتجر عبر واتساب.</small>
+              <small>
+                {t("يتم تأكيد التوفر والتوصيل مع المتجر عبر واتساب.")}
+              </small>
             </span>
           </div>
           <details open>
             <summary>
-              عن هذه القطعة <ChevronDown size={17} />
+              {t("عن هذه القطعة ")}
+              <ChevronDown size={17} />
             </summary>
             <p>{p.description}</p>
           </details>
           <details>
             <summary>
-              العناية والتوصيل <ChevronDown size={17} />
+              {t("العناية والتوصيل ")}
+              <ChevronDown size={17} />
             </summary>
             <p>
-              احفظي القطعة بعيدًا عن العطور والماء، ونظّفيها بقطعة قماش ناعمة.
-              تُحدّد مدة التوصيل عند تأكيد الطلب.
+              {t(
+                "احفظي القطعة بعيدًا عن العطور والماء، ونظّفيها بقطعة قماش ناعمة. تُحدّد مدة التوصيل عند تأكيد الطلب.",
+              )}
             </p>
             <Link className="text-link" to="/info/delivery">
-              تفاصيل التوصيل <ArrowLeft size={15} />
+              {t("تفاصيل التوصيل ")}
+              <ArrowLeft size={15} />
             </Link>
           </details>
         </div>
@@ -199,10 +214,11 @@ export default function ProductPage() {
         <div className="section-heading">
           <div>
             <span className="eyebrow">THE PERFECT PAIRING</span>
-            <h2>قد تُحبّين أيضًا</h2>
+            <h2>{t("قد تُحبّين أيضًا")}</h2>
           </div>
           <Link className="text-link" to="/shop">
-            جميع القطع <ArrowLeft size={17} />
+            {t("جميع القطع ")}
+            <ArrowLeft size={17} />
           </Link>
         </div>
         <div className="product-grid">

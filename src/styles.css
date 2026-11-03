@@ -4168,6 +4168,49 @@ mark {
   }
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.language-switch select {
+  width: 76px;
+  min-height: 36px;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.hebrew-fields {
+  margin-block: 20px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+.hebrew-fields legend {
+  padding-inline: 6px;
+  font-weight: 600;
+}
+html[lang="he"] body {
+  font-family: Arial, sans-serif;
+}
+@media (max-width: 600px) {
+  .header-main {
+    gap: 8px;
+  }
+  .language-switch select {
+    width: 65px;
+    font-size: 11px;
+  }
+}
 .order-photos {
   border: 1px solid var(--line);
   border-radius: 4px;

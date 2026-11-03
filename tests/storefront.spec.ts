@@ -130,7 +130,7 @@ test("admin creates, edits, duplicates and deletes product; homepage updates", a
     .getByRole("button", { name: "إدارة المنتجات", exact: true })
     .click();
   await page.getByRole("button", { name: "إضافة منتج", exact: true }).click();
-  await page.getByLabel("اسم المنتج").fill("قطعة اختبار");
+  await page.getByLabel("اسم المنتج", { exact: true }).fill("قطعة اختبار");
   await page.getByLabel("رمز المنتج / SKU").fill("TEST-01");
   await page.getByLabel("السعر الأصلي").fill("50");
   await page.getByLabel("الكمية المتوفرة").fill("3");
@@ -145,7 +145,7 @@ test("admin creates, edits, duplicates and deletes product; homepage updates", a
   await page
     .getByRole("button", { name: "تعديل قطعة اختبار", exact: true })
     .click();
-  await page.getByLabel("اسم المنتج").fill("قطعة معدلة");
+  await page.getByLabel("اسم المنتج", { exact: true }).fill("قطعة معدلة");
   await page.getByRole("button", { name: "حفظ المحتوى" }).click();
   await expect(page.locator("tbody")).toContainText("قطعة معدلة");
   await page
@@ -162,7 +162,9 @@ test("admin creates, edits, duplicates and deletes product; homepage updates", a
   await page
     .getByRole("button", { name: "إدارة الصفحة الرئيسية", exact: true })
     .click();
-  await page.getByLabel("شريط الإعلان").fill("إعلان اختبار جديد");
+  await page
+    .getByLabel("شريط الإعلان", { exact: true })
+    .fill("إعلان اختبار جديد");
   await page.getByRole("button", { name: "حفظ التغييرات" }).click();
   await page.goto("/");
   await expect(page.locator(".announcement")).toContainText(
@@ -176,7 +178,7 @@ test("category, banner and review image management", async ({ page }) => {
     .getByRole("button", { name: "إدارة الأصناف", exact: true })
     .click();
   await page.getByRole("button", { name: "إضافة صنف", exact: true }).click();
-  await page.getByLabel("اسم الصنف").fill("صنف جديد");
+  await page.getByLabel("اسم الصنف", { exact: true }).fill("صنف جديد");
   await page
     .locator(".editor-modal input[type=file]")
     .setInputFiles("public/images/earrings.webp");

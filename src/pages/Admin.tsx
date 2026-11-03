@@ -4,6 +4,7 @@ import {
   validateDeliveryRates,
 } from "../lib/delivery";
 import Media from "../components/Media";
+import HebrewFields, { type HebrewField } from "../components/HebrewFields";
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -30,7 +31,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useStore } from "../lib/store";
+import { useAdminStore } from "../lib/store";
 import { supabase, supabaseProjectHost } from "../lib/supabase";
 import {
   OwnerSignInError,
@@ -59,6 +60,24 @@ const sectionNames: Record<string, string> = {
   reviews: "آراء زبائننا",
   about: "حكاية المتجر",
 };
+const hebrewFields: Record<Collection, HebrewField[]> = {
+  products: [
+    { key: "name", label: "اسم المنتج" },
+    { key: "shortDescription", label: "الوصف القصير", multiline: true },
+    { key: "description", label: "الوصف الكامل", multiline: true },
+  ],
+  categories: [
+    { key: "name", label: "اسم الصنف" },
+    { key: "description", label: "وصف الصنف", multiline: true },
+  ],
+  banners: [
+    { key: "title", label: "العنوان", multiline: true },
+    { key: "description", label: "الوصف", multiline: true },
+    { key: "eyebrow", label: "العبارة الصغيرة" },
+    { key: "button", label: "نص الزر" },
+  ],
+  reviews: [{ key: "caption", label: "التعليق" }],
+};
 function Toggle({
   label,
   value,
@@ -81,7 +100,7 @@ function Toggle({
   );
 }
 export default function Admin() {
-  const store = useStore(),
+  const store = useAdminStore(),
     { data, demo, owner, demoAdmin, setDemoAdmin, save, remove, toast } = store;
   const [tab, setTab] = useState("overview"),
     [sidebar, setSidebar] = useState(false),
@@ -206,6 +225,18 @@ export default function Admin() {
     const { table } = editing;
     const record = { ...editing.record };
     if (table === "products") {
+      if (record.translations?.he) {
+        const he = { ...record.translations.he };
+        for (const kind of ["colors", "sizes"] as const) {
+          if (Array.isArray(he[kind]))
+            he[kind] = record[kind]
+              .map((value: string, i: number) =>
+                value ? (he[kind][i] ?? "") : null,
+              )
+              .filter((value: string | null) => value !== null);
+        }
+        record.translations = { ...record.translations, he };
+      }
       record.colors = record.colors.filter(Boolean);
       record.sizes = record.sizes.filter(Boolean);
     }
@@ -1064,6 +1095,45 @@ export default function Admin() {
                     </p>
                   </>
                 )}
+                <HebrewFields
+                  record={settingsEditing ? settings : data.settings}
+                  fields={
+                    tab === "home"
+                      ? [
+                          { key: "announcement", label: "شريط الإعلان" },
+                          {
+                            key: "promoTitle",
+                            label: "العنوان الترويجي",
+                            multiline: true,
+                          },
+                          {
+                            key: "promoText",
+                            label: "النص الترويجي",
+                            multiline: true,
+                          },
+                        ]
+                      : [
+                          { key: "name", label: "اسم المتجر" },
+                          { key: "deliveryAreas", label: "مناطق التوصيل" },
+                          {
+                            key: "contact",
+                            label: "معلومات التواصل",
+                            multiline: true,
+                          },
+                          {
+                            key: "about",
+                            label: "حكاية المتجر",
+                            multiline: true,
+                          },
+                        ]
+                  }
+                  onChange={(he) =>
+                    setSettings((previous) => ({
+                      ...previous,
+                      translations: { ...previous.translations, he },
+                    }))
+                  }
+                />
                 <button className="button" disabled={busy}>
                   <Check size={17} />
                   {busy ? "جارٍ الحفظ..." : "حفظ التغييرات"}
@@ -1260,6 +1330,24 @@ export default function Admin() {
                       </div>
                     </>
                   )}
+                  <HebrewFields
+                    record={editing.record}
+                    fields={hebrewFields[editing.table]}
+                    options={
+                      editing.table === "products"
+                        ? {
+                            colors: editing.record.colors,
+                            sizes: editing.record.sizes,
+                          }
+                        : undefined
+                    }
+                    onChange={(he) =>
+                      field("translations", {
+                        ...editing.record.translations,
+                        he,
+                      })
+                    }
+                  />
                   {input("ترتيب العرض", "order", "number", true)}
                   <Toggle
                     label="منشور للزوار"

@@ -1,3 +1,5 @@
+import { useLanguage } from "../lib/i18n";
+import LanguageSwitch from "./LanguageSwitch";
 import Highlight from "./Highlight";
 import Media from "./Media";
 import { useEffect, useRef, useState } from "react";
@@ -27,9 +29,10 @@ import {
 import { useStore } from "../lib/store";
 import { money, normalize, price } from "../lib/utils";
 export function Logo() {
+  const { t } = useLanguage();
   const { data } = useStore();
   return (
-    <Link to="/" className="brand" aria-label="إيليت أكسسوريز، الرئيسية">
+    <Link to="/" className="brand" aria-label={t("إيليت أكسسوريز، الرئيسية")}>
       {data.settings.logo ? (
         <Media src={data.settings.logo} alt={data.settings.name} />
       ) : (
@@ -51,6 +54,7 @@ export function SearchBox({
   mobile?: boolean;
   onClose?: () => void;
 }) {
+  const { t } = useLanguage();
   const { data } = useStore(),
     [query, setQuery] = useState(""),
     [open, setOpen] = useState(false),
@@ -96,8 +100,8 @@ export function SearchBox({
         <Search size={18} />
         <input
           autoFocus={mobile}
-          aria-label="ابحثي عن قطعة"
-          placeholder="ابحثي عن قطعتك المفضّلة..."
+          aria-label={t("ابحثي عن قطعة")}
+          placeholder={t("ابحثي عن قطعتك المفضّلة...")}
           value={query}
           onFocus={() => setOpen(true)}
           onChange={(e) => {
@@ -108,7 +112,7 @@ export function SearchBox({
         {query && (
           <button
             type="button"
-            aria-label="مسح البحث"
+            aria-label={t("مسح البحث")}
             onClick={() => setQuery("")}
           >
             <X size={15} />
@@ -117,7 +121,7 @@ export function SearchBox({
       </form>
       {open && query && (
         <div className="search-results">
-          <span className="small muted">قطع قد تُحبّينها</span>
+          <span className="small muted">{t("قطع قد تُحبّينها")}</span>
           {results.length ? (
             results.map((p) => (
               <Link
@@ -138,11 +142,12 @@ export function SearchBox({
             ))
           ) : (
             <p className="muted">
-              لم نجد قطعة مطابقة. جرّبي اسمًا آخر أو تصفّحي الأصناف.
+              {t("لم نجد قطعة مطابقة. جرّبي اسمًا آخر أو تصفّحي الأصناف.")}
             </p>
           )}
           <button className="text-link" onClick={go}>
-            عرض جميع النتائج <ArrowLeft size={15} />
+            {t("عرض جميع النتائج ")}
+            <ArrowLeft size={15} />
           </button>
         </div>
       )}
@@ -150,6 +155,7 @@ export function SearchBox({
   );
 }
 export default function Layout() {
+  const { t } = useLanguage();
   const { data, cart, notice, demo, error, loading, reload } = useStore(),
     [menu, setMenu] = useState(false),
     [search, setSearch] = useState(false);
@@ -166,16 +172,16 @@ export default function Layout() {
     };
   }, [menu, search]);
   const links = [
-    ["/", "الرئيسية"],
-    ["/shop?new=1", "وصل حديثًا"],
-    ["/shop", "جميع الإكسسوارات"],
-    ["/shop?sale=1", "العروض"],
-    ["/about", "حكاية إيليت"],
+    ["/", t("الرئيسية")],
+    ["/shop?new=1", t("وصل حديثًا")],
+    ["/shop", t("جميع الإكسسوارات")],
+    ["/shop?sale=1", t("العروض")],
+    ["/about", t("حكاية إيليت")],
   ];
   return (
     <>
       <a className="skip-link" href="#main">
-        تجاوز إلى المحتوى
+        {t("تجاوز إلى المحتوى")}
       </a>
       {data.settings.announcement && (
         <div className="announcement">
@@ -188,14 +194,14 @@ export default function Layout() {
           <div className="header-brand">
             <button
               className="icon-button mobile-only"
-              aria-label="فتح القائمة"
+              aria-label={t("فتح القائمة")}
               onClick={() => setMenu(true)}
             >
               <Menu />
             </button>
             <Logo />
           </div>
-          <nav className="desktop-nav" aria-label="التنقل الرئيسي">
+          <nav className="desktop-nav" aria-label={t("التنقل الرئيسي")}>
             {links.map(([to, label]) => (
               <NavLink
                 key={to}
@@ -215,9 +221,10 @@ export default function Layout() {
             ))}
           </nav>
           <div className="header-actions">
+            <LanguageSwitch />
             <button
               className="icon-button"
-              aria-label="فتح البحث"
+              aria-label={t("فتح البحث")}
               onClick={() => setSearch(true)}
             >
               <Search size={20} />
@@ -225,7 +232,7 @@ export default function Layout() {
             <Link
               className="icon-button wishlist-link"
               to="/shop?favorites=1"
-              aria-label="القطع المفضلة"
+              aria-label={t("القطع المفضلة")}
             >
               <Heart size={20} />
             </Link>
@@ -233,7 +240,9 @@ export default function Layout() {
             <Link
               to="/cart"
               className="bag-link"
-              aria-label={`حقيبة التسوق، ${cart.reduce((n, x) => n + x.quantity, 0)} قطع`}
+              aria-label={t("حقيبة التسوق، {value0} قطع", {
+                value0: cart.reduce((n, x) => n + x.quantity, 0),
+              })}
             >
               <ShoppingBag size={21} />
               <span className="cart-count">
@@ -244,10 +253,11 @@ export default function Layout() {
         </div>
         <div className="header-search-row">
           <div className="container">
-            <span>مختارات بعناية. تفاصيل بحُب.</span>
+            <span>{t("مختارات بعناية. تفاصيل بحُب.")}</span>
             <SearchBox />
             <Link to="/shop">
-              اكتشفي ما يُشبهك <ArrowUpLeft size={14} />
+              {t("اكتشفي ما يُشبهك ")}
+              <ArrowUpLeft size={14} />
             </Link>
           </div>
         </div>
@@ -263,7 +273,7 @@ export default function Layout() {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label={search ? "البحث عن المنتجات" : "القائمة الرئيسية"}
+            aria-label={search ? t("البحث عن المنتجات") : t("القائمة الرئيسية")}
             className={`overlay-panel ${search ? "search-panel" : ""}`}
             onClick={(e) => e.stopPropagation()}
           >
@@ -271,7 +281,7 @@ export default function Layout() {
               <Logo />
               <button
                 className="icon-button"
-                aria-label="إغلاق"
+                aria-label={t("إغلاق")}
                 onClick={() => {
                   setMenu(false);
                   setSearch(false);
@@ -282,9 +292,9 @@ export default function Layout() {
             </div>
             {search ? (
               <>
-                <h2>عن أي قطعة تبحثين؟</h2>
+                <h2>{t("عن أي قطعة تبحثين؟")}</h2>
                 <SearchBox mobile onClose={() => setSearch(false)} />
-                <p className="small muted">اكتشفي الأصناف</p>
+                <p className="small muted">{t("اكتشفي الأصناف")}</p>
                 <div className="search-chips">
                   {data.categories
                     .filter((c) => c.visible)
@@ -314,11 +324,11 @@ export default function Layout() {
           <div className="container error-banner" role="alert">
             {error}
             <button className="text-link" onClick={() => void reload()}>
-              إعادة المحاولة
+              {t("إعادة المحاولة")}
             </button>
           </div>
         ) : loading ? (
-          <div className="loading">جارٍ تحميل مختارات إيليت...</div>
+          <div className="loading">{t("جارٍ تحميل مختارات إيليت...")}</div>
         ) : null}
         <Outlet />
       </main>
@@ -327,19 +337,22 @@ export default function Layout() {
           <div>
             <Truck />
             <span>
-              توصيل إلى بابك<small>إلى مناطق التوصيل المعتمدة</small>
+              {t("توصيل إلى بابك")}
+              <small>{t("إلى مناطق التوصيل المعتمدة")}</small>
             </span>
           </div>
           <div>
             <Gift />
             <span>
-              كل قطعة، هدية<small>تفاصيل تُختار بعناية</small>
+              {t("كل قطعة، هدية")}
+              <small>{t("تفاصيل تُختار بعناية")}</small>
             </span>
           </div>
           <div>
             <ShieldCheck />
             <span>
-              تسوّق بكل راحة<small>تأكيد طلبك مباشرة عبر واتساب</small>
+              {t("تسوّق بكل راحة")}
+              <small>{t("تأكيد طلبك مباشرة عبر واتساب")}</small>
             </span>
           </div>
         </div>
@@ -349,9 +362,9 @@ export default function Layout() {
           <div className="footer-about">
             <Logo />
             <p>
-              تفاصيل صغيرة تصنع الفرق.
+              {t("تفاصيل صغيرة تصنع الفرق.")}
               <br />
-              إكسسوارات تُكمّل إطلالتك، وتُشبهك.
+              {t("إكسسوارات تُكمّل إطلالتك، وتُشبهك.")}
             </p>
             <div className="social-links">
               {data.settings.instagram && (
@@ -359,7 +372,7 @@ export default function Layout() {
                   href={data.settings.instagram}
                   target="_blank"
                   rel="noreferrer"
-                  aria-label="إنستغرام"
+                  aria-label={t("إنستغرام")}
                 >
                   <Instagram size={19} />
                 </a>
@@ -369,7 +382,7 @@ export default function Layout() {
                   href={data.settings.facebook}
                   target="_blank"
                   rel="noreferrer"
-                  aria-label="فيسبوك"
+                  aria-label={t("فيسبوك")}
                 >
                   f
                 </a>
@@ -378,37 +391,39 @@ export default function Layout() {
             </div>
           </div>
           <div>
-            <h3>اكتشفي إيليت</h3>
-            <Link to="/shop?new=1">وصل حديثًا</Link>
-            <Link to="/shop">جميع الإكسسوارات</Link>
-            <Link to="/shop?sale=1">عروض مختارة</Link>
+            <h3>{t("اكتشفي إيليت")}</h3>
+            <Link to="/shop?new=1">{t("وصل حديثًا")}</Link>
+            <Link to="/shop">{t("جميع الإكسسوارات")}</Link>
+            <Link to="/shop?sale=1">{t("عروض مختارة")}</Link>
           </div>
           <div>
-            <h3>نحن هنا لأجلك</h3>
-            <Link to="/about">حكايتنا</Link>
-            <Link to="/info/delivery">الشحن والتوصيل</Link>
-            <Link to="/info/care">العناية بقطعك</Link>
-            <Link to="/info/privacy">الخصوصية</Link>
+            <h3>{t("نحن هنا لأجلك")}</h3>
+            <Link to="/about">{t("حكايتنا")}</Link>
+            <Link to="/info/delivery">{t("الشحن والتوصيل")}</Link>
+            <Link to="/info/care">{t("العناية بقطعك")}</Link>
+            <Link to="/info/privacy">{t("الخصوصية")}</Link>
           </div>
           <div className="footer-note">
             <span className="eyebrow">LET'S STAY CLOSE</span>
             <h3>
-              يسعدنا أن نكون جزءًا
+              {t("يسعدنا أن نكون جزءًا")}
               <br />
-              من تفاصيل يومك.
+              {t("من تفاصيل يومك.")}
             </h3>
             <Link className="text-link" to="/contact">
-              تواصلي معنا <ArrowUpLeft size={17} />
+              {t("تواصلي معنا ")}
+              <ArrowUpLeft size={17} />
             </Link>
           </div>
         </div>
         <div className="footer-bottom container">
           <span>
-            {new Date().getFullYear()} {data.settings.name}. جميع الحقوق محفوظة.
+            {new Date().getFullYear()} {data.settings.name}
+            {t(". جميع الحقوق محفوظة.")}
           </span>
           {demo && (
             <span className="demo-label">
-              عرض تجريبي · المنتجات والأسعار للتجربة
+              {t("عرض تجريبي \u00B7 المنتجات والأسعار للتجربة")}
             </span>
           )}
           <span dir="ltr">MADE FOR YOUR EVERYDAY ELEGANCE</span>

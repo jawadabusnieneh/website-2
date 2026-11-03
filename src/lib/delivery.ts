@@ -1,4 +1,10 @@
-import type { DeliveryRates, DeliveryRegion, Settings } from "../types";
+import type {
+  DeliveryRates,
+  DeliveryRegion,
+  Language,
+  Settings,
+} from "../types";
+import { translator } from "./i18n-core";
 
 export const DELIVERY_REGIONS = [
   { id: "jerusalem", label: "القدس" },
@@ -25,20 +31,29 @@ export function getDeliveryRates(
   }
   return rates;
 }
-export function getDeliveryOptions(settings: Pick<Settings, "deliveryRates">) {
+export function getDeliveryOptions(
+  settings: Pick<Settings, "deliveryRates">,
+  language: Language = "ar",
+) {
   const rates = getDeliveryRates(settings);
   return DELIVERY_REGIONS.map((region) => ({
     ...region,
+    label: translator(language)(region.label),
     fee: rates[region.id],
   }));
 }
 export function deliveryQuote(
   settings: Pick<Settings, "deliveryRates">,
   region: unknown,
+  language: Language = "ar",
 ) {
   if (!isDeliveryRegion(region))
-    throw new Error("اختاري منطقة التوصيل قبل إرسال الطلب.");
-  return getDeliveryOptions(settings).find((option) => option.id === region)!;
+    throw new Error(
+      translator(language)("اختاري منطقة التوصيل قبل إرسال الطلب."),
+    );
+  return getDeliveryOptions(settings, language).find(
+    (option) => option.id === region,
+  )!;
 }
 export function validateDeliveryRates(rates: DeliveryRates): void {
   if (

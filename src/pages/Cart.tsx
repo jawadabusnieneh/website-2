@@ -1,3 +1,5 @@
+import { useLanguage } from "../lib/i18n";
+import { optionLabel } from "../lib/i18n-core";
 import OrderPhotos from "../components/OrderPhotos";
 import { useOrderImages } from "../lib/use-order-images";
 import Media from "../components/Media";
@@ -31,6 +33,7 @@ import {
 } from "../lib/utils";
 import type { Customer } from "../types";
 export default function Cart({ checkout = false }: { checkout?: boolean }) {
+  const { t, language } = useLanguage();
   const { cart, data, updateCart, removeCart, demo } = useStore(),
     navigate = useNavigate();
   const [customer, setCustomer] = useState<Customer>({
@@ -60,7 +63,7 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
     checkout && cart.length > 0,
   );
   const delivery = isDeliveryRegion(customer.deliveryRegion)
-    ? deliveryQuote(data.settings, customer.deliveryRegion)
+    ? deliveryQuote(data.settings, customer.deliveryRegion, language)
     : null;
   useEffect(() => {
     try {
@@ -90,6 +93,7 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
     orderProductNames,
     orderImages.version,
     checkout,
+    language,
     data.settings.name,
     data.settings.whatsapp,
     data.settings.currency,
@@ -103,11 +107,11 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
       customer.address.trim().length < 6 ||
       customer.city.trim().length < 2
     ) {
-      setError("يُرجى كتابة الاسم الكامل والمدينة وعنوان توصيل واضح.");
+      setError(t("يُرجى كتابة الاسم الكامل والمدينة وعنوان توصيل واضح."));
       return;
     }
     if (!/^[+\d\s()-]{8,20}$/.test(customer.phone)) {
-      setError("يُرجى إدخال رقم هاتف صحيح.");
+      setError(t("يُرجى إدخال رقم هاتف صحيح."));
       return;
     }
     if (
@@ -116,15 +120,15 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
         customer.maps,
       )
     ) {
-      setError("يُرجى إدخال رابط موقع صالح من خرائط Google.");
+      setError(t("يُرجى إدخال رابط موقع صالح من خرائط Google."));
       return;
     }
     if (!isDeliveryRegion(customer.deliveryRegion)) {
-      setError("اختاري منطقة التوصيل قبل إرسال الطلب.");
+      setError(t("اختاري منطقة التوصيل قبل إرسال الطلب."));
       return;
     }
     if (orderImages.linksLoading) {
-      setError("جارٍ تجهيز روابط صور الطلب. انتظري قليلًا ثم حاولي مجددًا.");
+      setError(t("جارٍ تجهيز روابط صور الطلب. انتظري قليلًا ثم حاولي مجددًا."));
       return;
     }
     try {
@@ -142,6 +146,7 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
               .map((image) => [image.productId, image.imageUrl!]),
           ),
         },
+        language,
       );
       setOrderUrl(url);
       window.open(url, "_blank", "noopener,noreferrer");
@@ -154,33 +159,34 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
       <div className="empty-state container">
         <ShoppingBag size={52} strokeWidth={1} />
         <span className="eyebrow">ROOM FOR SOMETHING LOVELY</span>
-        <h1>حقيبتك تنتظر تفاصيلك</h1>
-        <p>اختاري قطعًا تُشبهك، وسنحتفظ بها هنا.</p>
+        <h1>{t("حقيبتك تنتظر تفاصيلك")}</h1>
+        <p>{t("اختاري قطعًا تُشبهك، وسنحتفظ بها هنا.")}</p>
         <Link to="/shop" className="button">
-          اكتشفي التشكيلة <ArrowLeft size={18} />
+          {t("اكتشفي التشكيلة ")}
+          <ArrowLeft size={18} />
         </Link>
       </div>
     );
   return (
     <div className="container cart-page">
       <div className="breadcrumbs">
-        <Link to="/">الرئيسية</Link>
+        <Link to="/">{t("الرئيسية")}</Link>
         <span>/</span>
-        <Link to="/cart">الحقيبة</Link>
+        <Link to="/cart">{t("الحقيبة")}</Link>
         {checkout && (
           <>
             <span>/</span>
-            <span>إتمام الطلب</span>
+            <span>{t("إتمام الطلب")}</span>
           </>
         )}
       </div>
       <div className="page-title">
         <span className="eyebrow">YOUR LITTLE SELECTION</span>
-        <h1>{checkout ? "خطوة أقرب إلى قطعتك" : "حقيبة التسوق"}</h1>
+        <h1>{checkout ? t("خطوة أقرب إلى قطعتك") : t("حقيبة التسوق")}</h1>
         <p>
           {checkout
-            ? "دون حساب أو تسجيل. نُكمل تفاصيل طلبك معك عبر واتساب."
-            : `${count} قطع اخترتِها بحُب`}
+            ? t("دون حساب أو تسجيل. نُكمل تفاصيل طلبك معك عبر واتساب.")
+            : t("{value0} قطع اخترتِها بحُب", { value0: count })}
         </p>
       </div>
       <div className="cart-layout">
@@ -191,15 +197,15 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
               className="checkout-form"
               onSubmit={submit}
             >
-              <h2>تفاصيل التوصيل</h2>
+              <h2>{t("تفاصيل التوصيل")}</h2>
               <div className="form-grid">
                 {[
-                  ["name", "الاسم الكامل", "text"],
-                  ["phone", "رقم الهاتف", "tel"],
-                  ["city", "المدينة / البلدة", "text"],
-                  ["address", "عنوان التوصيل الكامل", "text"],
-                  ["landmark", "أقرب معلم (اختياري)", "text"],
-                  ["maps", "رابط خرائط Google (اختياري)", "url"],
+                  ["name", t("الاسم الكامل"), "text"],
+                  ["phone", t("رقم الهاتف"), "tel"],
+                  ["city", t("المدينة / البلدة"), "text"],
+                  ["address", t("عنوان التوصيل الكامل"), "text"],
+                  ["landmark", t("أقرب معلم (اختياري)"), "text"],
+                  ["maps", t("رابط خرائط Google (اختياري)"), "url"],
                 ].map(([key, label, type]) => (
                   <label key={key}>
                     {label}
@@ -225,7 +231,7 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
                   </label>
                 ))}
                 <label className="full-width">
-                  ملاحظات إضافية (اختياري)
+                  {t("ملاحظات إضافية (اختياري)")}
                   <textarea
                     rows={3}
                     value={customer.notes}
@@ -238,16 +244,16 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
               <div className="form-notice">
                 <MapPin size={19} />
                 <p>
-                  مناطق التوصيل:{" "}
-                  {getDeliveryOptions(data.settings)
+                  {t("مناطق التوصيل:")}{" "}
+                  {getDeliveryOptions(data.settings, language)
                     .map((option) => option.label)
-                    .join("، ")}
-                  . اختاري المنطقة من ملخّص الطلب لحساب رسومها.
+                    .join(t("، "))}
+                  {t(". اختاري المنطقة من ملخّص الطلب لحساب رسومها.")}
                 </p>
               </div>
               <Link to="/cart" className="text-link">
                 <ArrowRight size={16} />
-                العودة إلى الحقيبة
+                {t("العودة إلى الحقيبة")}
               </Link>
               {error && (
                 <p className="form-error" role="alert">
@@ -258,14 +264,16 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
                 <div className="success-panel" role="status">
                   <Check size={20} />
                   <div>
-                    <strong>طلبك جاهز للإرسال</strong>
+                    <strong>{t("طلبك جاهز للإرسال")}</strong>
                     <p>
-                      اضغطي «إرسال» داخل واتساب ليصل إلى المتجر. فتح واتساب وحده
-                      لا يؤكد استلام الطلب.
+                      {t(
+                        "اضغطي \u00ABإرسال\u00BB داخل واتساب ليصل إلى المتجر. فتح واتساب وحده لا يؤكد استلام الطلب.",
+                      )}
                     </p>
                     <p>
-                      تتضمن الرسالة روابط صور المنتجات المتاحة. لإرفاق ملفات
-                      الصور، استخدمي قسم صور الطلب أدناه.
+                      {t(
+                        "تتضمن الرسالة روابط صور المنتجات المتاحة. لإرفاق ملفات الصور، استخدمي قسم صور الطلب أدناه.",
+                      )}
                     </p>
                     <a
                       href={orderUrl}
@@ -273,7 +281,8 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
                       rel="noreferrer"
                       className="text-link"
                     >
-                      فتح الطلب في واتساب مجددًا <ArrowLeft size={16} />
+                      {t("فتح الطلب في واتساب مجددًا ")}
+                      <ArrowLeft size={16} />
                     </a>
                   </div>
                 </div>
@@ -310,7 +319,10 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
                             <h3>{p.name}</h3>
                           </Link>
                           <span className="small muted">
-                            {[item.color, item.size]
+                            {[
+                              optionLabel(p, "colors", item.color, language),
+                              optionLabel(p, "sizes", item.size, language),
+                            ]
                               .filter(Boolean)
                               .join(" / ")}
                           </span>
@@ -319,12 +331,14 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
                           </strong>
                           {(!p.visible || p.stock < item.quantity) && (
                             <span className="form-error small">
-                              الكمية غير متوفرة، عدّلي السلة.
+                              {t("الكمية غير متوفرة، عدّلي السلة.")}
                             </span>
                           )}
                           <div className="quantity-control">
                             <button
-                              aria-label={`تقليل ${p.name}`}
+                              aria-label={t("تقليل {value0}", {
+                                value0: p.name,
+                              })}
                               disabled={item.quantity <= 1}
                               onClick={() => updateCart(key, item.quantity - 1)}
                             >
@@ -332,7 +346,9 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
                             </button>
                             <span>{item.quantity}</span>
                             <button
-                              aria-label={`زيادة ${p.name}`}
+                              aria-label={t("زيادة {value0}", {
+                                value0: p.name,
+                              })}
                               disabled={item.quantity >= p.stock}
                               onClick={() => updateCart(key, item.quantity + 1)}
                             >
@@ -343,7 +359,7 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
                         <div className="cart-item-end">
                           <button
                             className="icon-button"
-                            aria-label={`إزالة ${p.name}`}
+                            aria-label={t("إزالة {value0}", { value0: p.name })}
                             onClick={() => removeCart(key)}
                           >
                             <Trash2 size={17} />
@@ -358,12 +374,12 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
                       </>
                     ) : (
                       <>
-                        <p>قطعة لم تعد متاحة</p>
+                        <p>{t("قطعة لم تعد متاحة")}</p>
                         <button
                           className="text-link"
                           onClick={() => removeCart(key)}
                         >
-                          حذف القطعة
+                          {t("حذف القطعة")}
                         </button>
                       </>
                     )}
@@ -372,13 +388,13 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
               })}
               <Link to="/shop" className="text-link">
                 <ArrowRight size={16} />
-                متابعة التسوق
+                {t("متابعة التسوق")}
               </Link>
             </div>
           )}
         </div>
         <aside className="order-summary">
-          <h2>ملخّص اختياراتك</h2>
+          <h2>{t("ملخّص اختياراتك")}</h2>
           {checkout &&
             cart.map((item) => {
               const p = data.products.find((p) => p.id === item.productId);
@@ -391,7 +407,12 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
                       <small>
                         {item.quantity} ×{" "}
                         {money(price(p), data.settings.currency)} ·{" "}
-                        {[item.color, item.size].filter(Boolean).join(" / ")}
+                        {[
+                          optionLabel(p, "colors", item.color, language),
+                          optionLabel(p, "sizes", item.size, language),
+                        ]
+                          .filter(Boolean)
+                          .join(" / ")}
                       </small>
                     </span>
                   </div>
@@ -409,20 +430,27 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
             }}
           />
           <div className="summary-row">
-            <span>مجموع المنتجات ({count})</span>
+            <span>
+              {t("مجموع المنتجات (")}
+              {count})
+            </span>
             <span>{money(subtotal, data.settings.currency)}</span>
           </div>
           <div className="summary-row">
-            <span>{delivery ? `التوصيل — ${delivery.label}` : "التوصيل"}</span>
+            <span>
+              {delivery
+                ? t("التوصيل \u2014 {value0}", { value0: delivery.label })
+                : t("التوصيل")}
+            </span>
             <span>
               {delivery
                 ? money(delivery.fee, data.settings.currency)
-                : "يُحدَّد حسب المنطقة"}
+                : t("يُحدَّد حسب المنطقة")}
             </span>
           </div>
           <div className="summary-row total">
             <strong>
-              {delivery ? "الإجمالي التقديري" : "الإجمالي قبل التوصيل"}
+              {delivery ? t("الإجمالي التقديري") : t("الإجمالي قبل التوصيل")}
             </strong>
             <strong>
               {money(subtotal + (delivery?.fee ?? 0), data.settings.currency)}
@@ -430,8 +458,9 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
           </div>
           {invalid && (
             <p className="form-error">
-              تغيّر توفر بعض القطع أو خياراتها. يُرجى حذفها وإضافتها مجددًا قبل
-              المتابعة.
+              {t(
+                "تغيّر توفر بعض القطع أو خياراتها. يُرجى حذفها وإضافتها مجددًا قبل المتابعة.",
+              )}
             </p>
           )}
           {checkout ? (
@@ -443,8 +472,8 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
             >
               <MessageCircle size={19} />
               {orderImages.linksLoading
-                ? "جارٍ تجهيز صور الطلب..."
-                : "إرسال الطلب عبر واتساب"}
+                ? t("جارٍ تجهيز صور الطلب...")
+                : t("إرسال الطلب عبر واتساب")}
             </button>
           ) : (
             <button
@@ -452,17 +481,20 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
               disabled={invalid}
               onClick={() => navigate("/checkout")}
             >
-              متابعة لإتمام الطلب <ArrowLeft size={18} />
+              {t("متابعة لإتمام الطلب ")}
+              <ArrowLeft size={18} />
             </button>
           )}
           <p className="summary-footnote">
-            لا يتم الدفع هنا. يُؤكَّد الطلب والتوصيل مباشرة مع المتجر عبر
-            واتساب.
+            {t(
+              "لا يتم الدفع هنا. يُؤكَّد الطلب والتوصيل مباشرة مع المتجر عبر واتساب.",
+            )}
           </p>
           {demo && !data.settings.whatsapp && (
             <p className="demo-note">
-              هذا عرض تجريبي. يجب ضبط رقم المتجر من إعدادات الإدارة لتفعيل إرسال
-              الطلب.
+              {t(
+                "هذا عرض تجريبي. يجب ضبط رقم المتجر من إعدادات الإدارة لتفعيل إرسال الطلب.",
+              )}
             </p>
           )}
         </aside>

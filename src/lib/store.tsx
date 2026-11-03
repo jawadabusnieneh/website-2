@@ -5,11 +5,15 @@ import {
   useEffect,
   useState,
   useRef,
+  useMemo,
   type ReactNode,
 } from "react";
 import { supabase } from "./supabase";
 import { demoData } from "./demo";
 import { cartKey, readLocal } from "./utils";
+import { pruneUnavailableCart, readCart } from "./cart-sync";
+import { useLanguage } from "./i18n";
+import { localizeStore, translator } from "./i18n-core";
 import type {
   CartItem,
   Collection,
@@ -20,6 +24,7 @@ import type {
 const tables: Collection[] = ["products", "categories", "banners", "reviews"];
 interface StoreContextValue {
   data: StoreData;
+  storefrontData: StoreData;
   demo: boolean;
   loading: boolean;
   error: string;
@@ -52,6 +57,7 @@ const emptyData: StoreData = {
   },
 };
 export function StoreProvider({ children }: { children: ReactNode }) {
+  const { language, t } = useLanguage();
   const [data, setData] = useState<StoreData>(
     supabase ? emptyData : readLocal("elite-demo-v1", demoData),
   );
@@ -60,28 +66,41 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     dataRef.current = data;
   }, [data]);
   const [loading, setLoading] = useState(!!supabase),
+    [catalogReady, setCatalogReady] = useState(!supabase),
     [error, setError] = useState(""),
     [owner, setOwner] = useState(false),
     [demoAdmin, setDemoAdmin] = useState(false);
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    const v = readLocal<unknown>("elite-cart", []);
-    return Array.isArray(v)
-      ? v.filter(
-          (x) =>
-            x &&
-            typeof x.productId === "string" &&
-            Number.isInteger(x.quantity) &&
-            x.quantity > 0 &&
-            typeof x.color === "string" &&
-            typeof x.size === "string",
-        )
-      : [];
-  });
+  const [cart, setCart] = useState<CartItem[]>(() =>
+    readCart(readLocal<unknown>("elite-cart", [])),
+  );
   const [notice, setNotice] = useState("");
   const [favorites, setFavorites] = useState<string[]>(() =>
     readLocal("elite-favorites", []),
   );
   const toast = useCallback((s: string) => setNotice(s), []);
+  useEffect(() => {
+    if (catalogReady)
+      setCart((previous) => pruneUnavailableCart(previous, data.products));
+  }, [catalogReady, data.products]);
+  useEffect(() => {
+    function sync(event: StorageEvent) {
+      if (event.key === "elite-cart") {
+        const items = readCart(readLocal<unknown>("elite-cart", []));
+        setCart(
+          catalogReady
+            ? pruneUnavailableCart(items, dataRef.current.products)
+            : items,
+        );
+      }
+      if (!supabase && event.key === "elite-demo-v1") {
+        const next = readLocal("elite-demo-v1", demoData);
+        dataRef.current = next;
+        setData(next);
+      }
+    }
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, [catalogReady]);
   useEffect(() => {
     if (notice) {
       const t = setTimeout(() => setNotice(""), 4000);
@@ -92,9 +111,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem("elite-cart", JSON.stringify(cart));
     } catch {
-      toast("تعذر حفظ السلة في هذا المتصفح.");
+      toast(t("تعذر حفظ السلة في هذا المتصفح."));
     }
-  }, [cart, toast]);
+  }, [cart, toast, t]);
   useEffect(() => {
     try {
       localStorage.setItem("elite-favorites", JSON.stringify(favorites));
@@ -102,8 +121,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       /* noncritical */
     }
   }, [favorites]);
+  const reloadSequence = useRef(0);
+  const reloadInFlight = useRef(false);
   const reload = useCallback(async () => {
     if (!supabase) return;
+    const sequence = ++reloadSequence.current;
+    reloadInFlight.current = true;
     setLoading(true);
     setError("");
     try {
@@ -114,6 +137,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       );
       const failed = results.find((r) => r.error);
       if (failed?.error) throw failed.error;
+      if (sequence !== reloadSequence.current) return;
       const next = { ...emptyData };
       tables.forEach((t, i) => {
         (next[t] as any[]) = results[i].data!.map((r) => ({
@@ -122,13 +146,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }));
       });
       next.settings = results[4].data?.[0]?.payload ?? emptyData.settings;
+      dataRef.current = next;
       setData(next);
+      setCatalogReady(true);
     } catch {
+      if (sequence !== reloadSequence.current) return;
       setError(
         "تعذر تحميل بيانات المتجر. تحققي من إعداد Supabase والاتصال ثم أعيدي المحاولة.",
       );
     } finally {
-      setLoading(false);
+      if (sequence === reloadSequence.current) {
+        reloadInFlight.current = false;
+        setLoading(false);
+      }
     }
   }, []);
   useEffect(() => {
@@ -164,26 +194,36 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         () => void reload(),
       )
       .subscribe();
-    const focus = () => void reload();
+    const focus = () => {
+      if (!reloadInFlight.current) void reload();
+    };
+    const visible = () => {
+      if (!document.hidden) focus();
+    };
+    // Unpublishing can remove RLS access before a realtime event is delivered.
+    const poll = setInterval(visible, 15000);
     window.addEventListener("focus", focus);
+    window.addEventListener("online", focus);
+    document.addEventListener("visibilitychange", visible);
     return () => {
       active = false;
       auth.subscription.unsubscribe();
       supabase!.removeChannel(channel);
       window.removeEventListener("focus", focus);
+      window.removeEventListener("online", focus);
+      document.removeEventListener("visibilitychange", visible);
+      clearInterval(poll);
     };
   }, [reload]);
   async function save(table: Collection | "settings", record: any) {
     if (supabase) {
       if (!owner) throw new Error("لا تملكين صلاحية إدارة المتجر.");
-      const { error } = await supabase
-        .from(table)
-        .upsert({
-          id: record.id,
-          payload: record,
-          published: table === "settings" || record.visible,
-          sort_order: record.order ?? 0,
-        });
+      const { error } = await supabase.from(table).upsert({
+        id: record.id,
+        payload: record,
+        published: table === "settings" || record.visible,
+        sort_order: record.order ?? 0,
+      });
       if (error) throw new Error("تعذّر الحفظ. تحققي من الاتصال والصلاحيات.");
       await reload();
     } else {
@@ -232,7 +272,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       .filter((x) => x.productId === p.id)
       .reduce((n, x) => n + x.quantity, 0);
     if (current + quantity > p.stock) {
-      toast("هذه الكمية غير متوفرة حاليًا.");
+      toast(t("هذه الكمية غير متوفرة حاليًا."));
       return;
     }
     setCart((prev) =>
@@ -242,7 +282,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           )
         : [...prev, item],
     );
-    toast(`أُضيف ${p.name} إلى حقيبتك`);
+    toast(t("أُضيف {name} إلى حقيبتك", { name: p.name }));
   }
   function updateCart(key: string, quantity: number) {
     if (quantity < 1) return;
@@ -254,20 +294,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           .filter((i) => i.productId === x.productId && cartKey(i) !== key)
           .reduce((n, i) => n + i.quantity, 0);
         if (!p || quantity + other > p.stock) {
-          toast("الكمية المطلوبة غير متوفرة.");
+          toast(t("الكمية المطلوبة غير متوفرة."));
           return x;
         }
         return { ...x, quantity };
       }),
     );
   }
+  const storefrontData = useMemo(
+    () => localizeStore(data, language),
+    [data, language],
+  );
   return (
     <StoreContext.Provider
       value={{
         data,
+        storefrontData,
         demo: !supabase,
         loading,
-        error,
+        error: translator(language)(error),
         owner,
         demoAdmin,
         setDemoAdmin,
@@ -292,4 +337,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     </StoreContext.Provider>
   );
 }
-export const useStore = () => useContext(StoreContext);
+export const useAdminStore = () => useContext(StoreContext);
+export const useStore = () => {
+  const store = useContext(StoreContext);
+  return { ...store, data: store.storefrontData, rawData: store.data };
+};

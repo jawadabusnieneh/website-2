@@ -1,3 +1,4 @@
+import { useLanguage } from "../lib/i18n";
 import { getDeliveryOptions } from "../lib/delivery";
 import { money } from "../lib/utils";
 import Media from "../components/Media";
@@ -5,35 +6,58 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Gem, Instagram, MessageCircle } from "lucide-react";
 import { useStore } from "../lib/store";
 export default function Info({ kind = "info" }: { kind?: string }) {
+  const { t, language } = useLanguage();
   const { data } = useStore(),
     { slug } = useParams();
   const pages: Record<string, [string, string, string]> = {
     delivery: [
-      "الشحن والتوصيل",
-      `أسعار التوصيل حسب المنطقة: ${getDeliveryOptions(data.settings)
-        .map(
-          (option) =>
-            `${option.label}: ${money(option.fee, data.settings.currency)}`,
-        )
-        .join("، ")}. اختاري منطقتك عند الطلب ليظهر الإجمالي شاملًا التوصيل.`,
-      `${data.settings.deliveryAreas ? `تفاصيل مناطق الخدمة: ${data.settings.deliveryAreas}. ` : ""}وقت التوصيل وتوفر المنتجات وسياسة الاستبدال تُؤكَّد مع المتجر عبر واتساب قبل اعتماد الطلب. الإجمالي في السلة تقديري حتى تأكيد تفاصيل التوصيل.`,
+      t("الشحن والتوصيل"),
+      t(
+        "أسعار التوصيل حسب المنطقة: {value0}. اختاري منطقتك عند الطلب ليظهر الإجمالي شاملًا التوصيل.",
+        {
+          value0: getDeliveryOptions(data.settings, language)
+            .map(
+              (option) =>
+                `${option.label}: ${money(option.fee, data.settings.currency)}`,
+            )
+            .join(t("، ")),
+        },
+      ),
+      t(
+        "{value0}وقت التوصيل وتوفر المنتجات وسياسة الاستبدال تُؤكَّد مع المتجر عبر واتساب قبل اعتماد الطلب. الإجمالي في السلة تقديري حتى تأكيد تفاصيل التوصيل.",
+        {
+          value0: data.settings.deliveryAreas
+            ? t("تفاصيل مناطق الخدمة: {value0}. ", {
+                value0: data.settings.deliveryAreas,
+              })
+            : "",
+        },
+      ),
     ],
     care: [
-      "لتحافظي على جمال قطعك",
-      "احفظي الإكسسوارات في مكان جاف بعيدًا عن أشعة الشمس المباشرة، وافصلي القطع عن بعضها لحمايتها من الخدوش.",
-      "تجنّبي ملامسة العطر والكريمات والماء، واستخدمي قماشًا ناعمًا وجافًا للتنظيف. تُضاف مواصفات المواد لكل قطعة عند تجهيز الكتالوج الفعلي.",
+      t("لتحافظي على جمال قطعك"),
+      t(
+        "احفظي الإكسسوارات في مكان جاف بعيدًا عن أشعة الشمس المباشرة، وافصلي القطع عن بعضها لحمايتها من الخدوش.",
+      ),
+      t(
+        "تجنّبي ملامسة العطر والكريمات والماء، واستخدمي قماشًا ناعمًا وجافًا للتنظيف. تُضاف مواصفات المواد لكل قطعة عند تجهيز الكتالوج الفعلي.",
+      ),
     ],
     privacy: [
-      "خصوصيتك من تفاصيل اهتمامنا",
-      "يمكنك التسوق دون إنشاء حساب. تُحفظ السلة والمفضلة في متصفحك، ولا تُرسل بيانات التوصيل إلا ضمن رسالة واتساب التي تختارين إرسالها.",
-      "يستخدم المتجر Supabase لاستضافة المحتوى وإدارة حساب المالك عند تفعيله. لا ننشر صور محادثات أو آراء دون موافقة أصحابها. عند استخدام واتساب تنطبق سياسة خصوصية الخدمة أيضًا.",
+      t("خصوصيتك من تفاصيل اهتمامنا"),
+      t(
+        "يمكنك التسوق دون إنشاء حساب. تُحفظ السلة والمفضلة في متصفحك، ولا تُرسل بيانات التوصيل إلا ضمن رسالة واتساب التي تختارين إرسالها.",
+      ),
+      t(
+        "يستخدم المتجر Supabase لاستضافة المحتوى وإدارة حساب المالك عند تفعيله. لا ننشر صور محادثات أو آراء دون موافقة أصحابها. عند استخدام واتساب تنطبق سياسة خصوصية الخدمة أيضًا.",
+      ),
     ],
   };
   if (kind === "contact")
     return (
       <div className="container info-page">
         <span className="eyebrow">A CONVERSATION AWAY</span>
-        <h1>نحن هنا لأجلك</h1>
+        <h1>{t("نحن هنا لأجلك")}</h1>
         <p>{data.settings.contact}</p>
         <div className="contact-actions">
           {data.settings.whatsapp ? (
@@ -44,11 +68,11 @@ export default function Info({ kind = "info" }: { kind?: string }) {
               href={`https://wa.me/${data.settings.whatsapp.replace(/\D/g, "")}`}
             >
               <MessageCircle size={20} />
-              تواصلي عبر واتساب
+              {t("تواصلي عبر واتساب")}
             </a>
           ) : (
             <div className="form-notice">
-              ستتوفر معلومات التواصل عند إطلاق المتجر. هذا عرض تجريبي.
+              {t("ستتوفر معلومات التواصل عند إطلاق المتجر. هذا عرض تجريبي.")}
             </div>
           )}
           {data.settings.instagram && (
@@ -59,7 +83,7 @@ export default function Info({ kind = "info" }: { kind?: string }) {
               target="_blank"
             >
               <Instagram size={19} />
-              إنستغرام
+              {t("إنستغرام")}
             </a>
           )}
         </div>
@@ -72,20 +96,22 @@ export default function Info({ kind = "info" }: { kind?: string }) {
           <div>
             <span className="eyebrow">THE STORY OF ELITE</span>
             <h1>
-              تفاصيل بحُب،
+              {t("تفاصيل بحُب،")}
               <br />
-              وأناقة تُشبهك.
+              {t("وأناقة تُشبهك.")}
             </h1>
             <p>{data.settings.about}</p>
             <p>
-              هنا، نترك مساحة لذوقك الخاص. من قطعة يومية هادئة إلى تفصيل يرافق
-              أجمل مناسباتك، نريد لاختيارك أن يُشعرك بأنك أنتِ.
+              {t(
+                "هنا، نترك مساحة لذوقك الخاص. من قطعة يومية هادئة إلى تفصيل يرافق أجمل مناسباتك، نريد لاختيارك أن يُشعرك بأنك أنتِ.",
+              )}
             </p>
             <Link to="/shop" className="button">
-              اكتشفي عالم إيليت <ArrowLeft size={18} />
+              {t("اكتشفي عالم إيليت ")}
+              <ArrowLeft size={18} />
             </Link>
           </div>
-          <Media src="/images/hero.webp" alt="عالم إيليت للإكسسوارات" />
+          <Media src="/images/hero.webp" alt={t("عالم إيليت للإكسسوارات")} />
         </div>
       </>
     );
@@ -94,9 +120,10 @@ export default function Info({ kind = "info" }: { kind?: string }) {
     return (
       <div className="empty-state container">
         <Gem size={40} />
-        <h1>لم نجد هذه الصفحة</h1>
+        <h1>{t("لم نجد هذه الصفحة")}</h1>
         <Link to="/" className="button">
-          العودة للرئيسية <ArrowLeft size={18} />
+          {t("العودة للرئيسية ")}
+          <ArrowLeft size={18} />
         </Link>
       </div>
     );
@@ -107,7 +134,8 @@ export default function Info({ kind = "info" }: { kind?: string }) {
       <p>{page[1]}</p>
       <p>{page[2]}</p>
       <Link to="/contact" className="text-link">
-        لديكِ سؤال؟ تواصلي معنا <ArrowLeft size={17} />
+        {t("لديكِ سؤال؟ تواصلي معنا ")}
+        <ArrowLeft size={17} />
       </Link>
     </div>
   );

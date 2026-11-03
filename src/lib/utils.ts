@@ -4,11 +4,15 @@ import {
   type OrderImageLinks,
 } from "./order-images";
 import { deliveryQuote } from "./delivery";
-import type { CartItem, Customer, Product, Settings } from "../types";
+import { optionLabel, translator } from "./i18n-core";
+import type { CartItem, Customer, Language, Product, Settings } from "../types";
 export const normalize = (value: string) =>
   value
     .normalize("NFKD")
-    .replace(/[\u064B-\u065F\u0670\u0640]/g, "")
+    .replace(
+      /[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u064B-\u065F\u0670\u0640]/g,
+      "",
+    )
     .replace(/[أإآٱ]/g, "ا")
     .replace(/ى/g, "ي")
     .replace(/ة/g, "ه")
@@ -57,26 +61,30 @@ export function whatsappOrder(
   settings: Settings,
   reference: string,
   media: OrderImageLinks = {},
+  language: Language = "ar",
 ) {
+  const t = translator(language);
   const number = settings.whatsapp.replace(/[^\d]/g, "");
   if (!/^\d{8,15}$/.test(number))
     throw new Error(
-      "رقم واتساب المتجر غير مُعدّ بعد. يُرجى التواصل مع المتجر قبل الطلب.",
+      t("رقم واتساب المتجر غير مُعدّ بعد. يُرجى التواصل مع المتجر قبل الطلب."),
     );
   if (cartProblem(items, products))
-    throw new Error("تغيّر توفر إحدى القطع أو خياراتها. يُرجى مراجعة السلة.");
+    throw new Error(
+      t("تغيّر توفر إحدى القطع أو خياراتها. يُرجى مراجعة السلة."),
+    );
   let total = 0,
     count = 0;
   const linkedProducts = new Set<string>();
   const lines = items.map((item) => {
     const p = products.find((p) => p.id === item.productId && p.visible);
     if (!p || item.quantity > p.stock || item.quantity < 1)
-      throw new Error("تغيّر توفر إحدى القطع. يُرجى مراجعة السلة.");
+      throw new Error(t("تغيّر توفر إحدى القطع. يُرجى مراجعة السلة."));
     if (
       (p.colors.length && !p.colors.includes(item.color)) ||
       (p.sizes.length && !p.sizes.includes(item.size))
     )
-      throw new Error("يُرجى مراجعة خيارات القطع في السلة.");
+      throw new Error(t("يُرجى مراجعة خيارات القطع في السلة."));
     const subtotal = price(p) * item.quantity;
     total += subtotal;
     count += item.quantity;
@@ -87,35 +95,51 @@ export function whatsappOrder(
         media.origin,
       );
       const product = productWebUrl(p.id, media.origin);
-      if (image) links.push(`صورة المنتج: ${image}`);
-      if (product) links.push(`رابط المنتج: ${product}`);
+      if (image) links.push(t("صورة المنتج: {url}", { url: image }));
+      if (product) links.push(t("رابط المنتج: {url}", { url: product }));
       linkedProducts.add(p.id);
     }
     return [
-      `${p.name}\n${[item.color, item.size].filter(Boolean).join(" / ")}\nالكمية: ${item.quantity} | سعر القطعة: ${money(price(p), settings.currency)}\nالمجموع: ${money(subtotal, settings.currency)}`,
+      [
+        p.name,
+        [
+          optionLabel(p, "colors", item.color, language),
+          optionLabel(p, "sizes", item.size, language),
+        ]
+          .filter(Boolean)
+          .join(" / "),
+        t("الكمية: {quantity} | سعر القطعة: {price}", {
+          quantity: item.quantity,
+          price: money(price(p), settings.currency),
+        }),
+        t("المجموع: {total}", { total: money(subtotal, settings.currency) }),
+      ].join("\n"),
       ...links,
     ].join("\n");
   });
-  if (!items.length) throw new Error("السلة فارغة.");
-  const delivery = deliveryQuote(settings, customer.deliveryRegion);
+  if (!items.length) throw new Error(t("السلة فارغة."));
+  const delivery = deliveryQuote(settings, customer.deliveryRegion, language);
   const message = [
-    `طلب جديد — ${settings.name}`,
-    `مرجع الطلب: ${reference}`,
+    t("طلب جديد — {name}", { name: settings.name }),
+    t("مرجع الطلب: {reference}", { reference }),
     "",
     ...lines.map((l) => l + "\n"),
-    `عدد القطع: ${count}`,
-    `مجموع المنتجات: ${money(total, settings.currency)}`,
-    `منطقة التوصيل: ${delivery.label}`,
-    `رسوم التوصيل: ${money(delivery.fee, settings.currency)}`,
-    `الإجمالي: ${money(total + delivery.fee, settings.currency)}`,
+    t("عدد القطع: {count}", { count }),
+    t("مجموع المنتجات: {total}", { total: money(total, settings.currency) }),
+    t("منطقة التوصيل: {region}", { region: delivery.label }),
+    t("رسوم التوصيل: {fee}", { fee: money(delivery.fee, settings.currency) }),
+    t("الإجمالي: {total}", {
+      total: money(total + delivery.fee, settings.currency),
+    }),
     "",
-    `الاسم: ${customer.name}`,
-    `الهاتف: ${customer.phone}`,
-    `المدينة: ${customer.city}`,
-    `العنوان: ${customer.address}`,
-    customer.landmark && `أقرب معلم: ${customer.landmark}`,
-    customer.maps && `الموقع: ${customer.maps}`,
-    customer.notes && `ملاحظات: ${customer.notes}`,
+    t("الاسم: {name}", { name: customer.name }),
+    t("الهاتف: {phone}", { phone: customer.phone }),
+    t("المدينة: {city}", { city: customer.city }),
+    t("العنوان: {address}", { address: customer.address }),
+    customer.landmark &&
+      t("أقرب معلم: {landmark}", { landmark: customer.landmark }),
+    customer.maps && t("الموقع: {maps}", { maps: customer.maps }),
+    customer.notes && t("ملاحظات: {notes}", { notes: customer.notes }),
   ].join("\n");
   return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }

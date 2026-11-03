@@ -1,7 +1,7 @@
+import { useLanguage } from "../lib/i18n";
 import { getDeliveryOptions } from "../lib/delivery";
 import { money } from "../lib/utils";
 import type { Customer, Settings } from "../types";
-
 export default function DeliverySelect({
   value,
   onChange,
@@ -13,9 +13,10 @@ export default function DeliverySelect({
   settings: Settings;
   form?: string;
 }) {
+  const { t, language } = useLanguage();
   return (
     <div className="delivery-selector">
-      <label htmlFor="delivery-region">منطقة التوصيل</label>
+      <label htmlFor="delivery-region">{t("منطقة التوصيل")}</label>
       <select
         id="delivery-region"
         name="deliveryRegion"
@@ -27,15 +28,15 @@ export default function DeliverySelect({
           onChange(event.target.value as Customer["deliveryRegion"])
         }
       >
-        <option value="">اختاري منطقة التوصيل</option>
-        {getDeliveryOptions(settings).map(({ id, label, fee }) => (
+        <option value="">{t("اختاري منطقة التوصيل")}</option>
+        {getDeliveryOptions(settings, language).map(({ id, label, fee }) => (
           <option key={id} value={id}>
             {label} — {money(fee, settings.currency)}
           </option>
         ))}
       </select>
       <small id="delivery-hint">
-        تُحسب رسوم التوصيل حسب المنطقة التي تختارينها.
+        {t("تُحسب رسوم التوصيل حسب المنطقة التي تختارينها.")}
       </small>
     </div>
   );

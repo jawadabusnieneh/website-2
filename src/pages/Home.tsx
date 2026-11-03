@@ -1,3 +1,4 @@
+import { useLanguage } from "../lib/i18n";
 import Media from "../components/Media";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -30,6 +31,7 @@ function Heading({
   link?: string;
   linkText?: string;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="section-heading">
       <div>
@@ -38,13 +40,14 @@ function Heading({
         {sub && <p>{sub}</p>}
       </div>
       <Link className="text-link" to={link}>
-        {linkText}
+        {t(linkText)}
         <ArrowUpLeft size={17} />
       </Link>
     </div>
   );
 }
 export default function Home() {
+  const { t } = useLanguage();
   const { data } = useStore();
   const banners = data.banners
     .filter((b) => b.visible)
@@ -105,9 +108,9 @@ export default function Home() {
       <section className="section categories-section container">
         <Heading
           label="A LITTLE SOMETHING FOR EVERY YOU"
-          title="لكل إطلالة، تفصيلها."
-          sub="تصفّحي مختاراتنا، واعثري على ما يُشبهك."
-          linkText="جميع الأصناف"
+          title={t("لكل إطلالة، تفصيلها.")}
+          sub={t("تصفّحي مختاراتنا، واعثري على ما يُشبهك.")}
+          linkText={t("جميع الأصناف")}
         />
         <div className="category-grid">
           {data.categories
@@ -142,10 +145,10 @@ export default function Home() {
         <div className="container">
           <Heading
             label="JUST ARRIVED"
-            title="جديد يُلفت، وتفاصيل تُحبّ."
-            sub="أحدث إضافاتنا، اختيرت لتكون المفضّلة لديكِ."
+            title={t("جديد يُلفت، وتفاصيل تُحبّ.")}
+            sub={t("أحدث إضافاتنا، اختيرت لتكون المفضّلة لديكِ.")}
             link="/shop?new=1"
-            linkText="كل ما هو جديد"
+            linkText={t("كل ما هو جديد")}
           />
           <div className="product-grid">
             {products
@@ -162,8 +165,8 @@ export default function Home() {
       <section className="section container featured-section">
         <Heading
           label="THE ELITE EDIT"
-          title="اختيارات إيليت"
-          sub="قطع نحبّها، ونظن أنكِ ستُحبّينها أيضًا."
+          title={t("اختيارات إيليت")}
+          sub={t("قطع نحبّها، ونظن أنكِ ستُحبّينها أيضًا.")}
         />
         <div className="product-grid">
           {products
@@ -180,9 +183,9 @@ export default function Home() {
         <div className="container">
           <Heading
             label="BEAUTIFUL FINDS, LOVELY PRICES"
-            title="قطع مميّزة، بفرصة أجمل."
+            title={t("قطع مميّزة، بفرصة أجمل.")}
             link="/shop?sale=1"
-            linkText="اكتشفي العروض"
+            linkText={t("اكتشفي العروض")}
           />
           <div className="product-grid">
             {products
@@ -200,7 +203,7 @@ export default function Home() {
         <div className="promo-picture">
           <Media
             src={data.settings.promoImage}
-            alt="تفاصيل من عالم إيليت"
+            alt={t("تفاصيل من عالم إيليت")}
             loading="lazy"
           />
         </div>
@@ -210,7 +213,8 @@ export default function Home() {
           <h2>{data.settings.promoTitle}</h2>
           <p>{data.settings.promoText}</p>
           <Link to="/shop" className="button button-light">
-            اختاري هديتك <ArrowLeft size={18} />
+            {t("اختاري هديتك ")}
+            <ArrowLeft size={18} />
           </Link>
           <span className="promo-signature">With love, Elite</span>
         </div>
@@ -221,8 +225,8 @@ export default function Home() {
         <div className="reviews-intro">
           <Quote size={30} strokeWidth={1} />
           <span className="eyebrow">YOUR WORDS, OUR JOY</span>
-          <h2>آراء زبائننا</h2>
-          <p>لكل قطعة حكاية، ولكلماتكنّ مكان خاص.</p>
+          <h2>{t("آراء زبائننا")}</h2>
+          <p>{t("لكل قطعة حكاية، ولكلماتكنّ مكان خاص.")}</p>
         </div>
         {reviews.length ? (
           <div className="review-grid">
@@ -234,12 +238,13 @@ export default function Home() {
               >
                 <Media
                   src={r.image}
-                  alt={r.caption || "رأي زبونة منشور بإذنها"}
+                  alt={r.caption || t("رأي زبونة منشور بإذنها")}
                   loading="lazy"
                 />
                 {r.caption && <span>{r.caption}</span>}
                 <span className="small">
-                  اضغطي للتكبير <ArrowUpLeft size={14} />
+                  {t("اضغطي للتكبير ")}
+                  <ArrowUpLeft size={14} />
                 </span>
               </button>
             ))}
@@ -247,8 +252,8 @@ export default function Home() {
         ) : (
           <div className="reviews-empty">
             <Image size={26} strokeWidth={1} />
-            <p>مساحة لكلماتكنّ الجميلة</p>
-            <span>نشارك هنا صور الآراء بعد موافقة صاحباتها.</span>
+            <p>{t("مساحة لكلماتكنّ الجميلة")}</p>
+            <span>{t("نشارك هنا صور الآراء بعد موافقة صاحباتها.")}</span>
           </div>
         )}
       </section>
@@ -260,15 +265,16 @@ export default function Home() {
           <div>
             <span className="eyebrow">MORE THAN AN ACCESSORY</span>
             <h2>
-              الأناقة ليست ما ترتدينه،
+              {t("الأناقة ليست ما ترتدينه،")}
               <br />
-              بل كيف تشعرين به.
+              {t("بل كيف تشعرين به.")}
             </h2>
           </div>
           <div>
             <p>{data.settings.about}</p>
             <Link to="/about" className="text-link">
-              تعرّفي إلى حكايتنا <ArrowUpLeft size={17} />
+              {t("تعرّفي إلى حكايتنا ")}
+              <ArrowUpLeft size={17} />
             </Link>
           </div>
         </div>
@@ -280,7 +286,7 @@ export default function Home() {
       {current && (
         <section
           className={`hero align-${current.placement}`}
-          aria-roledescription="عارض صور"
+          aria-roledescription={t("عارض صور")}
           onMouseEnter={() => setInteracting(true)}
           onMouseLeave={() => setInteracting(false)}
           onFocusCapture={() => setInteracting(true)}
@@ -306,7 +312,7 @@ export default function Home() {
             <Media
               className="hero-image"
               src={current.image}
-              alt="مجموعة إيليت للإكسسوارات"
+              alt={t("مجموعة إيليت للإكسسوارات")}
               fetchPriority="high"
             />
           </picture>
@@ -328,20 +334,20 @@ export default function Home() {
                 )}
                 <div className="hero-note">
                   <span className="fine-line" />
-                  مصمّمة لتُكمّل جمالك، لا لتُغيّره.
+                  {t("مصمّمة لتُكمّل جمالك، لا لتُغيّره.")}
                 </div>
               </div>
             </div>
           )}
           <div className="container hero-bottom">
             <div className="hero-slide-label">
-              <span>مختارات الموسم</span>
+              <span>{t("مختارات الموسم")}</span>
               <small>THE EVERYDAY COLLECTION</small>
             </div>
             <div className="slider-controls">
               <button
                 className="slider-arrow"
-                aria-label="الصورة السابقة"
+                aria-label={t("الصورة السابقة")}
                 onClick={() => changeSlide(-1)}
               >
                 <ArrowRight size={18} />
@@ -350,7 +356,7 @@ export default function Home() {
                 {banners.map((b, i) => (
                   <button
                     key={b.id}
-                    aria-label={`الصورة ${i + 1}`}
+                    aria-label={t("الصورة {value0}", { value0: i + 1 })}
                     aria-current={slide % banners.length === i}
                     onClick={() => setSlide(i)}
                   />
@@ -358,7 +364,7 @@ export default function Home() {
               </div>
               <button
                 className="slider-arrow"
-                aria-label="الصورة التالية"
+                aria-label={t("الصورة التالية")}
                 onClick={() => changeSlide(1)}
               >
                 <ArrowLeft size={18} />
@@ -366,7 +372,7 @@ export default function Home() {
               <button
                 className="autoplay-button"
                 aria-label={
-                  paused ? "تشغيل العرض التلقائي" : "إيقاف العرض التلقائي"
+                  paused ? t("تشغيل العرض التلقائي") : t("إيقاف العرض التلقائي")
                 }
                 onClick={() => setPaused(!paused)}
               >
@@ -382,7 +388,7 @@ export default function Home() {
       <div className="brand-ribbon">
         <span>LESS IS MORE. DETAILS ARE EVERYTHING.</span>
         <span className="ribbon-diamond" />
-        <span>جمالٌ في كل تفصيل</span>
+        <span>{t("جمالٌ في كل تفصيل")}</span>
         <span className="ribbon-diamond" />
         <span>CURATED WITH LOVE, WORN WITH CONFIDENCE.</span>
       </div>
@@ -394,7 +400,7 @@ export default function Home() {
           className="lightbox"
           role="dialog"
           aria-modal="true"
-          aria-label="صورة رأي زبونة"
+          aria-label={t("صورة رأي زبونة")}
           onClick={() => setReview(null)}
           onTouchStart={(e) => {
             startX.current = e.touches[0].clientX;
@@ -411,14 +417,14 @@ export default function Home() {
         >
           <button
             className="lightbox-close"
-            aria-label="إغلاق الصورة"
+            aria-label={t("إغلاق الصورة")}
             autoFocus
             onClick={() => setReview(null)}
           >
             <X />
           </button>
           <button
-            aria-label="السابق"
+            aria-label={t("السابق")}
             onClick={(e) => {
               e.stopPropagation();
               setReview((review - 1 + reviews.length) % reviews.length);
@@ -429,12 +435,12 @@ export default function Home() {
           <figure onClick={(e) => e.stopPropagation()}>
             <Media
               src={reviews[review].image}
-              alt={reviews[review].caption || "رأي زبونة"}
+              alt={reviews[review].caption || t("رأي زبونة")}
             />
             <figcaption>{reviews[review].caption}</figcaption>
           </figure>
           <button
-            aria-label="التالي"
+            aria-label={t("التالي")}
             onClick={(e) => {
               e.stopPropagation();
               setReview((review + 1) % reviews.length);

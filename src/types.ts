@@ -1,4 +1,8 @@
-export interface Product {
+export type Language = "ar" | "he";
+export interface Translatable {
+  translations?: { he?: Record<string, string | string[]> };
+}
+export interface Product extends Translatable {
   id: string;
   name: string;
   sku: string;
@@ -17,7 +21,7 @@ export interface Product {
   order: number;
   createdAt: string;
 }
-export interface Category {
+export interface Category extends Translatable {
   id: string;
   name: string;
   description: string;
@@ -26,7 +30,7 @@ export interface Category {
   featured: boolean;
   order: number;
 }
-export interface Banner {
+export interface Banner extends Translatable {
   id: string;
   title: string;
   description: string;
@@ -40,7 +44,7 @@ export interface Banner {
   placement: "right" | "center" | "left";
   overlay: boolean;
 }
-export interface Review {
+export interface Review extends Translatable {
   id: string;
   image: string;
   caption: string;
@@ -50,7 +54,7 @@ export interface Review {
 export type DeliveryRegion = "jerusalem" | "west-bank" | "inside";
 export type DeliveryRates = Record<DeliveryRegion, number>;
 
-export interface Settings {
+export interface Settings extends Translatable {
   id: string;
   name: string;
   whatsapp: string;

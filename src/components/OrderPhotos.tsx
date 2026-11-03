@@ -1,3 +1,4 @@
+import { useLanguage } from "../lib/i18n";
 import { useState } from "react";
 import { Download, Images, Share2 } from "lucide-react";
 import type { OrderImage, OrderPhotoFile } from "../lib/order-images";
@@ -14,10 +15,12 @@ export default function OrderPhotos({
   loading: boolean;
   orderUrl: string;
 }) {
+  const { t } = useLanguage();
   const [sharing, setSharing] = useState(false),
     [error, setError] = useState("");
   const text = new URL(orderUrl).searchParams.get("text") ?? "";
-  const reference = text.match(/^مرجع الطلب: (.+)$/m)?.[1] ?? "";
+  const reference =
+    text.match(/(?:مرجع الطلب|מספר הזמנה): (EL-[A-Z0-9]+)/m)?.[1] ?? "";
   const namedFiles = files.map(({ file, productId }) => {
     const index = images.findIndex((image) => image.productId === productId);
     const image = images[index];
@@ -48,12 +51,14 @@ export default function OrderPhotos({
       await navigator.share({
         files: namedFiles,
         text,
-        title: `صور الطلب ${reference}`,
+        title: t("صور الطلب {value0}", { value0: reference }),
       });
     } catch (failure) {
       if ((failure as Error).name !== "AbortError")
         setError(
-          "تعذّرت المشاركة من هذا المتصفح. يمكنك تنزيل الصور وإرفاقها داخل واتساب.",
+          t(
+            "تعذّرت المشاركة من هذا المتصفح. يمكنك تنزيل الصور وإرفاقها داخل واتساب.",
+          ),
         );
     } finally {
       setSharing(false);
@@ -70,16 +75,17 @@ export default function OrderPhotos({
     setTimeout(() => URL.revokeObjectURL(url), 10000);
   }
   return (
-    <section className="order-photos" aria-label="صور منتجات الطلب">
+    <section className="order-photos" aria-label={t("صور منتجات الطلب")}>
       <h3>
         <Images size={19} />
-        صور منتجات الطلب
+        {t("صور منتجات الطلب")}
       </h3>
       <p>
-        روابط الصور المتاحة مضافة إلى رسالة الطلب. لإرسال الصور كملفات، اختاري
-        واتساب ومحادثة المتجر من زر المشاركة، أو نزّليها وأرفقيها في المحادثة.
+        {t(
+          "روابط الصور المتاحة مضافة إلى رسالة الطلب. لإرسال الصور كملفات، اختاري واتساب ومحادثة المتجر من زر المشاركة، أو نزّليها وأرفقيها في المحادثة.",
+        )}
       </p>
-      {loading && <p role="status">جارٍ تجهيز صور المنتجات...</p>}
+      {loading && <p role="status">{t("جارٍ تجهيز صور المنتجات...")}</p>}
       {shareSupported && (
         <button
           type="button"
@@ -88,7 +94,7 @@ export default function OrderPhotos({
           onClick={() => void share()}
         >
           <Share2 size={17} />
-          {sharing ? "جارٍ فتح المشاركة..." : "مشاركة الطلب مع الصور"}
+          {sharing ? t("جارٍ فتح المشاركة...") : t("مشاركة الطلب مع الصور")}
         </button>
       )}
       <div className="order-photo-grid">
@@ -117,10 +123,10 @@ export default function OrderPhotos({
                       ),
                     )
                   }
-                  aria-label={`تنزيل صورة ${image.name}`}
+                  aria-label={t("تنزيل صورة {value0}", { value0: image.name })}
                 >
                   <Download size={14} />
-                  تنزيل الصورة
+                  {t("تنزيل الصورة")}
                 </button>
               ) : image.imageUrl ? (
                 <a
@@ -129,10 +135,12 @@ export default function OrderPhotos({
                   rel="noreferrer"
                   className="text-link"
                 >
-                  فتح الصورة
+                  {t("فتح الصورة")}
                 </a>
               ) : !loading ? (
-                <span className="muted small">الصورة غير متاحة للتنزيل</span>
+                <span className="muted small">
+                  {t("الصورة غير متاحة للتنزيل")}
+                </span>
               ) : null}
             </div>
           );
@@ -140,13 +148,15 @@ export default function OrderPhotos({
       </div>
       {!loading && files.length < images.length && (
         <p className="small muted">
-          تعذّر تجهيز بعض الصور كملفات. روابط المنتجات تبقى موجودة داخل رسالة
-          الطلب.
+          {t(
+            "تعذّر تجهيز بعض الصور كملفات. روابط المنتجات تبقى موجودة داخل رسالة الطلب.",
+          )}
         </p>
       )}
       <p className="small muted">
-        روابط الصور المرفقة صالحة لمدة 7 أيام من تجهيز الطلب. قد يختلف دعم
-        مشاركة الصور والنص حسب الهاتف وواتساب.
+        {t(
+          "روابط الصور المرفقة صالحة لمدة 7 أيام من تجهيز الطلب. قد يختلف دعم مشاركة الصور والنص حسب الهاتف وواتساب.",
+        )}
       </p>
       {error && (
         <p role="alert" className="form-error">

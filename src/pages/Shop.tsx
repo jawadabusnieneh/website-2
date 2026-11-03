@@ -1,3 +1,4 @@
+import { useLanguage } from "../lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Heart, Search, SlidersHorizontal, X } from "lucide-react";
@@ -5,6 +6,7 @@ import { useStore } from "../lib/store";
 import { normalize, price } from "../lib/utils";
 import ProductCard from "../components/ProductCard";
 export default function Shop() {
+  const { t, language } = useLanguage();
   const { data, favorites } = useStore(),
     [params, setParams] = useSearchParams(),
     [filters, setFilters] = useState(false);
@@ -54,46 +56,46 @@ export default function Shop() {
       : sort === "high"
         ? price(b) - price(a)
         : sort === "name"
-          ? a.name.localeCompare(b.name, "ar")
+          ? a.name.localeCompare(b.name, language)
           : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
   return (
     <div className="container shop-page">
       <div className="breadcrumbs">
-        <Link to="/">الرئيسية</Link>
+        <Link to="/">{t("الرئيسية")}</Link>
         <span>/</span>
-        <span>التشكيلة</span>
+        <span>{t("التشكيلة")}</span>
       </div>
       <div className="shop-intro">
         <span className="eyebrow">FIND YOUR LITTLE LUXURY</span>
         <h1>
           {params.get("favorites")
-            ? "قطع قريبة من قلبك"
+            ? t("قطع قريبة من قلبك")
             : cat
               ? data.categories.find((c) => c.id === cat)?.name
               : params.get("new")
-                ? "وصل حديثًا"
+                ? t("وصل حديثًا")
                 : params.get("sale")
-                  ? "فرص جميلة، لقطع أجمل"
-                  : "تفاصيل تختارينها على ذوقك"}
+                  ? t("فرص جميلة، لقطع أجمل")
+                  : t("تفاصيل تختارينها على ذوقك")}
         </h1>
-        <p>قطع تُكمل إطلالتك، وتُعبّر عنك. اكتشفي ما يُشبهك.</p>
+        <p>{t("قطع تُكمل إطلالتك، وتُعبّر عنك. اكتشفي ما يُشبهك.")}</p>
       </div>
       <div className="catalog-layout">
         <aside
           role={filters ? "dialog" : undefined}
           aria-modal={filters ? true : undefined}
-          aria-label={filters ? "تصفية المنتجات" : undefined}
+          aria-label={filters ? t("تصفية المنتجات") : undefined}
           className={`filters ${filters ? "filters-open" : ""}`}
         >
           <div className="filter-title">
             <h3>
               <SlidersHorizontal size={18} />
-              تصفية التشكيلة
+              {t("تصفية التشكيلة")}
             </h3>
             <button
               className="icon-button mobile-only"
-              aria-label="إغلاق الفلاتر"
+              aria-label={t("إغلاق الفلاتر")}
               onClick={() => setFilters(false)}
             >
               <X />
@@ -103,18 +105,21 @@ export default function Shop() {
             <Search size={17} />
             <input
               value={q}
-              aria-label="بحث في المنتجات"
-              placeholder="ابحثي عن قطعة..."
+              aria-label={t("بحث في المنتجات")}
+              placeholder={t("ابحثي عن قطعة...")}
               onChange={(e) => param("q", e.target.value)}
             />
             {q && (
-              <button aria-label="مسح البحث" onClick={() => param("q", "")}>
+              <button
+                aria-label={t("مسح البحث")}
+                onClick={() => param("q", "")}
+              >
                 <X size={14} />
               </button>
             )}
           </label>
           <fieldset>
-            <legend>الصنف</legend>
+            <legend>{t("الصنف")}</legend>
             <label className="radio-label">
               <input
                 type="radio"
@@ -122,7 +127,7 @@ export default function Shop() {
                 checked={!cat}
                 onChange={() => param("category", "")}
               />
-              <span className="filter-option-name">جميع القطع</span>
+              <span className="filter-option-name">{t("جميع القطع")}</span>
             </label>
             {data.categories
               .filter((c) => c.visible)
@@ -146,13 +151,16 @@ export default function Shop() {
               ))}
           </fieldset>
           <fieldset>
-            <legend>نطاق السعر ({data.settings.currency})</legend>
+            <legend>
+              {t("نطاق السعر (")}
+              {data.settings.currency})
+            </legend>
             <div className="price-range">
               <input
                 type="number"
                 min="0"
-                aria-label="السعر من"
-                placeholder="من"
+                aria-label={t("السعر من")}
+                placeholder={t("من")}
                 value={params.get("min") ?? ""}
                 onChange={(e) => param("min", e.target.value)}
               />
@@ -160,20 +168,20 @@ export default function Shop() {
               <input
                 type="number"
                 min="0"
-                aria-label="السعر إلى"
-                placeholder="إلى"
+                aria-label={t("السعر إلى")}
+                placeholder={t("إلى")}
                 value={params.get("max") ?? ""}
                 onChange={(e) => param("max", e.target.value)}
               />
             </div>
           </fieldset>
           <fieldset>
-            <legend>اختياراتك</legend>
+            <legend>{t("اختياراتك")}</legend>
             {[
-              ["stock", "متوفر الآن"],
-              ["new", "وصل حديثًا"],
-              ["sale", "عليه عرض"],
-              ["favorites", "المفضلة فقط"],
+              ["stock", t("متوفر الآن")],
+              ["new", t("وصل حديثًا")],
+              ["sale", t("عليه عرض")],
+              ["favorites", t("المفضلة فقط")],
             ].map(([key, label]) => (
               <label className="radio-label" key={key}>
                 <input
@@ -186,38 +194,43 @@ export default function Shop() {
             ))}
           </fieldset>
           <button className="text-link" onClick={clearParams}>
-            مسح جميع الفلاتر <X size={14} />
+            {t("مسح جميع الفلاتر ")}
+            <X size={14} />
           </button>
           <button
             className="button mobile-only"
             onClick={() => setFilters(false)}
           >
-            عرض {results.length} قطعة
+            {t("عرض ")}
+            {results.length}
+            {t(" قطعة")}
           </button>
         </aside>
         <div>
           <div className="catalog-toolbar">
             <span>
-              {results.length} قطعة <span className="muted">تنتظر اكتشافك</span>
+              {results.length}
+              {t(" قطعة ")}
+              <span className="muted">{t("تنتظر اكتشافك")}</span>
             </span>
             <button
               className="filter-mobile mobile-only"
               onClick={() => setFilters(true)}
             >
               <SlidersHorizontal size={16} />
-              تصفية
+              {t("تصفية")}
             </button>
             <label>
-              ترتيب حسب{" "}
+              {t("ترتيب حسب")}{" "}
               <select
                 value={sort}
                 onChange={(e) => param("sort", e.target.value)}
-                aria-label="ترتيب المنتجات"
+                aria-label={t("ترتيب المنتجات")}
               >
-                <option value="new">الأحدث أولًا</option>
-                <option value="low">السعر: من الأقل</option>
-                <option value="high">السعر: من الأعلى</option>
-                <option value="name">اسم المنتج</option>
+                <option value="new">{t("الأحدث أولًا")}</option>
+                <option value="low">{t("السعر: من الأقل")}</option>
+                <option value="high">{t("السعر: من الأعلى")}</option>
+                <option value="name">{t("اسم المنتج")}</option>
               </select>
             </label>
           </div>
@@ -234,10 +247,11 @@ export default function Shop() {
               ) : (
                 <Search size={38} strokeWidth={1} />
               )}
-              <h2>لم نجد قطعة هنا بعد</h2>
-              <p>جرّبي كلمات أخرى أو عدّلي الفلاتر لاكتشاف المزيد.</p>
+              <h2>{t("لم نجد قطعة هنا بعد")}</h2>
+              <p>{t("جرّبي كلمات أخرى أو عدّلي الفلاتر لاكتشاف المزيد.")}</p>
               <button className="button" onClick={clearParams}>
-                اكتشفي جميع القطع <ArrowLeft size={18} />
+                {t("اكتشفي جميع القطع ")}
+                <ArrowLeft size={18} />
               </button>
             </div>
           )}
