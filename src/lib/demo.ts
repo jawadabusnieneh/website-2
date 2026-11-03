@@ -1,3 +1,4 @@
+import { DEFAULT_DELIVERY_RATES } from "./delivery";
 import type { StoreData } from "../types";
 const categories = [
   {
@@ -189,8 +190,8 @@ export const demoData: StoreData = {
     logo: "",
     currency: "₪",
     deliveryFee: 20,
-    deliveryAreas:
-      "القدس، رام الله، نابلس، الخليل، بيت لحم، جنين، طولكرم، قلقيلية، أريحا، طوباس، سلفيت",
+    deliveryRates: { ...DEFAULT_DELIVERY_RATES },
+    deliveryAreas: "القدس، الضفة الغربية، الداخل",
     announcement: "تفاصيل تُحبّينها، وأناقة تُشبهكِ — اكتشفي أحدث تشكيلاتنا",
     contact: "للاستفسار عن أي قطعة، يسعدنا تواصلك عبر واتساب.",
     about:

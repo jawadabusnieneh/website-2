@@ -1,5 +1,11 @@
 import Media from "../components/Media";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import DeliverySelect from "../components/DeliverySelect";
+import {
+  deliveryQuote,
+  getDeliveryOptions,
+  isDeliveryRegion,
+} from "../lib/delivery";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -18,6 +24,7 @@ import {
   cartKey,
   money,
   price,
+  readLocal,
   whatsappOrder,
 } from "../lib/utils";
 import type { Customer } from "../types";
@@ -25,6 +32,10 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
   const { cart, data, updateCart, removeCart, demo } = useStore(),
     navigate = useNavigate();
   const [customer, setCustomer] = useState<Customer>({
+      deliveryRegion: (() => {
+        const saved = readLocal<unknown>("elite-delivery-region", "");
+        return isDeliveryRegion(saved) ? saved : "";
+      })(),
       name: "",
       phone: "",
       city: "",
@@ -41,6 +52,39 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
     }, 0),
     count = cart.reduce((n, x) => n + x.quantity, 0);
   const invalid = cartProblem(cart, data.products);
+  const delivery = isDeliveryRegion(customer.deliveryRegion)
+    ? deliveryQuote(data.settings, customer.deliveryRegion)
+    : null;
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "elite-delivery-region",
+        JSON.stringify(customer.deliveryRegion),
+      );
+    } catch {
+      /* selection remains available in memory */
+    }
+  }, [customer.deliveryRegion]);
+  const orderProductNames = cart
+    .map(
+      (item) =>
+        data.products.find((product) => product.id === item.productId)?.name ??
+        "",
+    )
+    .join("\n");
+  useEffect(() => {
+    setOrderUrl("");
+  }, [
+    customer,
+    cart,
+    subtotal,
+    invalid,
+    delivery?.fee,
+    orderProductNames,
+    data.settings.name,
+    data.settings.whatsapp,
+    data.settings.currency,
+  ]);
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -64,6 +108,10 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
       )
     ) {
       setError("يُرجى إدخال رابط موقع صالح من خرائط Google.");
+      return;
+    }
+    if (!isDeliveryRegion(customer.deliveryRegion)) {
+      setError("اختاري منطقة التوصيل قبل إرسال الطلب.");
       return;
     }
     try {
@@ -170,7 +218,10 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
                 <MapPin size={19} />
                 <p>
                   مناطق التوصيل:{" "}
-                  {data.settings.deliveryAreas || "تُؤكد مع المتجر عند الطلب."}
+                  {getDeliveryOptions(data.settings)
+                    .map((option) => option.label)
+                    .join("، ")}
+                  . اختاري المنطقة من ملخّص الطلب لحساب رسومها.
                 </p>
               </div>
               <Link to="/cart" className="text-link">
@@ -314,23 +365,34 @@ export default function Cart({ checkout = false }: { checkout?: boolean }) {
                 )
               );
             })}
+          <DeliverySelect
+            value={customer.deliveryRegion}
+            settings={data.settings}
+            form={checkout ? "checkout-form" : undefined}
+            onChange={(deliveryRegion) => {
+              setError("");
+              setOrderUrl("");
+              setCustomer((previous) => ({ ...previous, deliveryRegion }));
+            }}
+          />
           <div className="summary-row">
             <span>مجموع المنتجات ({count})</span>
             <span>{money(subtotal, data.settings.currency)}</span>
           </div>
           <div className="summary-row">
-            <span>التوصيل</span>
+            <span>{delivery ? `التوصيل — ${delivery.label}` : "التوصيل"}</span>
             <span>
-              {money(data.settings.deliveryFee, data.settings.currency)}
+              {delivery
+                ? money(delivery.fee, data.settings.currency)
+                : "يُحدَّد حسب المنطقة"}
             </span>
           </div>
           <div className="summary-row total">
-            <strong>الإجمالي التقديري</strong>
             <strong>
-              {money(
-                subtotal + data.settings.deliveryFee,
-                data.settings.currency,
-              )}
+              {delivery ? "الإجمالي التقديري" : "الإجمالي قبل التوصيل"}
+            </strong>
+            <strong>
+              {money(subtotal + (delivery?.fee ?? 0), data.settings.currency)}
             </strong>
           </div>
           {invalid && (

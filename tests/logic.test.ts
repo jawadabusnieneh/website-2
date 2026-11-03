@@ -9,6 +9,7 @@ import {
 } from "../src/lib/utils";
 import { demoData } from "../src/lib/demo";
 const customer = {
+  deliveryRegion: "west-bank" as const,
   name: "سارة أحمد",
   phone: "0599000000",
   city: "رام الله",

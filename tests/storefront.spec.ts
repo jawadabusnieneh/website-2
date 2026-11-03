@@ -60,6 +60,9 @@ test("variants, quantity and persistent cart", async ({ page }) => {
   await page.goto("/cart");
   await expect(page.locator(".cart-item")).toHaveCount(1);
   await expect(page.locator(".cart-item")).toContainText("فضي / 7");
+  await page
+    .getByLabel("منطقة التوصيل", { exact: true })
+    .selectOption("west-bank");
   await expect(page.locator(".summary-row.total")).toContainText("170");
   await page.reload();
   await expect(page.locator(".cart-item")).toHaveCount(1);
@@ -94,6 +97,9 @@ test("checkout validation and encoded WhatsApp handoff", async ({ page }) => {
   await page.getByLabel("رقم الهاتف").fill("0599000000");
   await page.getByLabel("المدينة / البلدة").fill("رام الله");
   await page.getByLabel("عنوان التوصيل الكامل").fill("شارع الإرسال، بناية 12");
+  await page
+    .getByLabel("منطقة التوصيل", { exact: true })
+    .selectOption("west-bank");
   await page.evaluate(() => {
     (window as any).opened = "";
     window.open = (url?: string | URL) => {
@@ -390,6 +396,9 @@ test("mobile product gallery, cart and checkout remain usable at 360px", async (
     .getByRole("button", { name: "أضيفي إلى الحقيبة", exact: true })
     .click();
   await page.goto("/cart");
+  await page
+    .getByLabel("منطقة التوصيل", { exact: true })
+    .selectOption("west-bank");
   await expect(page.locator(".summary-row.total")).toContainText("115");
   expect(
     await page.evaluate(

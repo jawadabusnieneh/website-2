@@ -47,6 +47,9 @@ export interface Review {
   visible: boolean;
   order: number;
 }
+export type DeliveryRegion = "jerusalem" | "west-bank" | "inside";
+export type DeliveryRates = Record<DeliveryRegion, number>;
+
 export interface Settings {
   id: string;
   name: string;
@@ -55,7 +58,9 @@ export interface Settings {
   facebook: string;
   logo: string;
   currency: string;
+  /** Legacy field retained for existing settings records. */
   deliveryFee: number;
+  deliveryRates?: DeliveryRates;
   deliveryAreas: string;
   announcement: string;
   contact: string;
@@ -81,6 +86,7 @@ export interface CartItem {
   size: string;
 }
 export interface Customer {
+  deliveryRegion: DeliveryRegion | "";
   name: string;
   phone: string;
   city: string;

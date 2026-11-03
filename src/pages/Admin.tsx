@@ -1,3 +1,8 @@
+import {
+  DELIVERY_REGIONS,
+  getDeliveryRates,
+  validateDeliveryRates,
+} from "../lib/delivery";
 import Media from "../components/Media";
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
@@ -281,7 +286,11 @@ export default function Admin() {
     );
   }
   function startSettings() {
-    if (!settingsEditing) setSettings(structuredClone(data.settings));
+    if (!settingsEditing)
+      setSettings({
+        ...structuredClone(data.settings),
+        deliveryRates: getDeliveryRates(data.settings),
+      });
     setSettingsEditing(true);
   }
   if (!allowed)
@@ -787,7 +796,10 @@ export default function Admin() {
                     throw new Error(
                       "أدخلي رقم واتساب بصيغة دولية صحيحة، دون مسافات أو رمز محلي.",
                     );
-                  await save("settings", settings);
+                  const deliveryRates =
+                    settings.deliveryRates ?? getDeliveryRates(settings);
+                  validateDeliveryRates(deliveryRates);
+                  await save("settings", { ...settings, deliveryRates });
                   setSettingsEditing(false);
                 });
               }}
@@ -962,7 +974,6 @@ export default function Admin() {
                         ["instagram", "رابط إنستغرام", "url"],
                         ["facebook", "رابط فيسبوك", "url"],
                         ["currency", "رمز العملة", "text"],
-                        ["deliveryFee", "رسوم التوصيل", "number"],
                         ["deliveryAreas", "مناطق التوصيل", "text"],
                         ["contact", "معلومات التواصل", "text"],
                       ].map(([key, label, type]) => (
@@ -989,6 +1000,42 @@ export default function Admin() {
                           />
                         </label>
                       ))}
+                    </div>
+                    <h3>أسعار التوصيل حسب المنطقة</h3>
+                    <div className="form-grid delivery-rates-grid">
+                      {DELIVERY_REGIONS.map(({ id, label }) => {
+                        const current = settingsEditing
+                          ? settings
+                          : data.settings;
+                        const fee =
+                          current.deliveryRates?.[id] ??
+                          getDeliveryRates(current)[id];
+                        return (
+                          <label key={id}>
+                            توصيل {label} ({current.currency})
+                            <input
+                              type="number"
+                              required
+                              min="0"
+                              step="0.01"
+                              value={Number.isFinite(fee) ? fee : ""}
+                              onChange={(event) =>
+                                setSettings((previous) => ({
+                                  ...previous,
+                                  deliveryRates: {
+                                    ...getDeliveryRates(previous),
+                                    ...previous.deliveryRates,
+                                    [id]:
+                                      event.target.value === ""
+                                        ? NaN
+                                        : Number(event.target.value),
+                                  },
+                                }))
+                              }
+                            />
+                          </label>
+                        );
+                      })}
                     </div>
                     <label>
                       حكاية المتجر

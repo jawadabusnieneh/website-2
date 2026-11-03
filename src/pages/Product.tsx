@@ -1,3 +1,4 @@
+import { getDeliveryOptions } from "../lib/delivery";
 import Media from "../components/Media";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -162,8 +163,15 @@ export default function ProductPage() {
           <div className="delivery-note">
             <Truck size={20} />
             <span>
-              توصيل إلى بابك مقابل{" "}
-              {money(data.settings.deliveryFee, data.settings.currency)}
+              توصيل إلى بابك حسب المنطقة
+              <small>
+                {getDeliveryOptions(data.settings)
+                  .map(
+                    (option) =>
+                      `${option.label} ${money(option.fee, data.settings.currency)}`,
+                  )
+                  .join(" · ")}
+              </small>
               <small>يتم تأكيد التوفر والتوصيل مع المتجر عبر واتساب.</small>
             </span>
           </div>

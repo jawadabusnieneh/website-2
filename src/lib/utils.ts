@@ -1,3 +1,4 @@
+import { deliveryQuote } from "./delivery";
 import type { CartItem, Customer, Product, Settings } from "../types";
 export const normalize = (value: string) =>
   value
@@ -75,6 +76,7 @@ export function whatsappOrder(
     return `${p.name}\n${[item.color, item.size].filter(Boolean).join(" / ")}\nالكمية: ${item.quantity} | سعر القطعة: ${money(price(p), settings.currency)}\nالمجموع: ${money(subtotal, settings.currency)}`;
   });
   if (!items.length) throw new Error("السلة فارغة.");
+  const delivery = deliveryQuote(settings, customer.deliveryRegion);
   const message = [
     `طلب جديد — ${settings.name}`,
     `مرجع الطلب: ${reference}`,
@@ -82,8 +84,9 @@ export function whatsappOrder(
     ...lines.map((l) => l + "\n"),
     `عدد القطع: ${count}`,
     `مجموع المنتجات: ${money(total, settings.currency)}`,
-    `رسوم التوصيل: ${money(settings.deliveryFee, settings.currency)}`,
-    `الإجمالي: ${money(total + settings.deliveryFee, settings.currency)}`,
+    `منطقة التوصيل: ${delivery.label}`,
+    `رسوم التوصيل: ${money(delivery.fee, settings.currency)}`,
+    `الإجمالي: ${money(total + delivery.fee, settings.currency)}`,
     "",
     `الاسم: ${customer.name}`,
     `الهاتف: ${customer.phone}`,

@@ -1,3 +1,5 @@
+import { getDeliveryOptions } from "../lib/delivery";
+import { money } from "../lib/utils";
 import Media from "../components/Media";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Gem, Instagram, MessageCircle } from "lucide-react";
@@ -8,8 +10,13 @@ export default function Info({ kind = "info" }: { kind?: string }) {
   const pages: Record<string, [string, string, string]> = {
     delivery: [
       "الشحن والتوصيل",
-      `نوصل إلى: ${data.settings.deliveryAreas || "المناطق المتفق عليها مع المتجر"}. رسوم التوصيل الحالية: ${data.settings.deliveryFee} ${data.settings.currency}.`,
-      "وقت التوصيل وتوفر المنتجات وسياسة الاستبدال تُؤكَّد مع المتجر عبر واتساب قبل اعتماد الطلب. الإجمالي في السلة تقديري حتى تأكيد تفاصيل التوصيل.",
+      `أسعار التوصيل حسب المنطقة: ${getDeliveryOptions(data.settings)
+        .map(
+          (option) =>
+            `${option.label}: ${money(option.fee, data.settings.currency)}`,
+        )
+        .join("، ")}. اختاري منطقتك عند الطلب ليظهر الإجمالي شاملًا التوصيل.`,
+      `${data.settings.deliveryAreas ? `تفاصيل مناطق الخدمة: ${data.settings.deliveryAreas}. ` : ""}وقت التوصيل وتوفر المنتجات وسياسة الاستبدال تُؤكَّد مع المتجر عبر واتساب قبل اعتماد الطلب. الإجمالي في السلة تقديري حتى تأكيد تفاصيل التوصيل.`,
     ],
     care: [
       "لتحافظي على جمال قطعك",

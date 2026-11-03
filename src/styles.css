@@ -4141,3 +4141,29 @@ mark {
   font-size: 12px;
   margin-bottom: 16px;
 }
+
+.delivery-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 20px 0 24px;
+  font-size: 12px;
+}
+.delivery-selector select {
+  width: 100%;
+  font-size: 12px;
+  background: #fffdf9;
+}
+.delivery-selector small {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.8;
+}
+.delivery-rates-grid {
+  margin-block: 18px 28px;
+}
+@media (min-width: 701px) {
+  .delivery-rates-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
